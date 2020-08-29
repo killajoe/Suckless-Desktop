@@ -1,0 +1,162 @@
+diff --git a/config.def.h b/config.def.h
+index e7b1e50..b67d9af 100644
+--- a/config.def.h
++++ b/config.def.h
+@@ -13,7 +13,8 @@ static const char *colors[SchemeLast][2] = {
+ 	[SchemeSel] = { "#000000", "#a89984" },
+ 	[SchemeOut] = { "#000000", "#95c4ce" },
+   // >>>>>>>>>>>>>>>>>>>> fuzzyhighlight
+-  // ==================== fuzzyhighlight
++  [SchemeSelHighlight] = { "#ffc978", "#005577" },
++  [SchemeNormHighlight] = { "#ffc978", "#222222" },
+   // <<<<<<<<<<<<<<<<<<<< fuzzyhighlight
+   // >>>>>>>>>>>>>>>>>>>> more-color
+   // ==================== more-color
+diff --git a/dmenu.1 b/dmenu.1
+index 2997968..b71a0e0 100644
+--- a/dmenu.1
++++ b/dmenu.1
+@@ -86,7 +86,14 @@ dmenu \- dynamic menu
+ .RB [ \-sf
+ .IR color ]
+ \" >>>>>>>>>>>>>>>>>>>> fuzzyhighlight
+-\" ==================== fuzzyhighlight
++.RB [ \-nhb
++.IR color ]
++.RB [ \-nhf
++.IR color ]
++.RB [ \-shb
++.IR color ]
++.RB [ \-shf
++.IR color ]
+ \" <<<<<<<<<<<<<<<<<<<< fuzzyhighlight
+ .P
+ .BR dmenu_run " ..."
+@@ -207,7 +214,18 @@ defines the selected background color.
+ defines the selected foreground color.
+ .TP
+ \" >>>>>>>>>>>>>>>>>>>> fuzzyhighlight
+-\" ==================== fuzzyhighlight
++.BI \-nhb " color"
++defines the normal highlight background color.
++.TP
++.BI \-nhf " color"
++defines the normal highlight foreground color.
++.TP
++.BI \-shb " color"
++defines the selected highlight background color.
++.TP
++.BI \-shf " color"
++defines the selected highlight foreground color.
++.TP
+ \" <<<<<<<<<<<<<<<<<<<< fuzzyhighlight
+ .SH USAGE
+ dmenu is completely controlled by the keyboard.  Items are selected using the
+diff --git a/dmenu.c b/dmenu.c
+index ea6d3de..c3569e8 100644
+--- a/dmenu.c
++++ b/dmenu.c
+@@ -40,7 +40,8 @@
+ /* enums */
+ enum {
+   // >>>>>>>>>>>>>>>>>>>> fuzzyhighlight
+-  // ==================== fuzzyhighlight
++  SchemeNormHighlight,
++  SchemeSelHighlight,
+   // <<<<<<<<<<<<<<<<<<<< fuzzyhighlight
+   // >>>>>>>>>>>>>>>>>>>> more-color
+   // ==================== more-color
+@@ -219,7 +220,43 @@ cistrstr(const char *s, const char *sub)
+ }
+ 
+ // >>>>>>>>>>>>>>>>>>>> fuzzyhighlight
+-// ==================== fuzzyhighlight
++static void
++drawhighlights(struct item *item, int x, int y, int maxw)
++{
++  int i, indent;
++  char *highlight;
++  char c;
++
++  if (!(strlen(item->text) && strlen(text)))
++    return;
++
++  drw_setscheme(drw, scheme[item == sel ?
++    SchemeSelHighlight :
++    SchemeNormHighlight]);
++  for (i = 0, highlight = item->text; *highlight && text[i];)
++  {
++    if (*highlight == text[i])
++    { /*get indentation */
++      c = *highlight;
++      *highlight = '\0';
++      indent = TEXTW(item->text);
++      *highlight = c;
++
++      /*highlight character */
++      c = highlight[1];
++      highlight[1] = '\0';
++      drw_text(				drw,
++        x + indent - (lrpad / 2),
++        y,
++        MIN(maxw - indent, TEXTW(highlight) - lrpad),
++        bh, 0, highlight, 0
++    );
++      highlight[1] = c;
++      i++;
++    }
++    highlight++;
++  }
++}
+ // <<<<<<<<<<<<<<<<<<<< fuzzyhighlight
+ 
+ // >>>>>>>>>>>>>>>>>>>> highlight
+@@ -230,7 +267,7 @@ static int
+ drawitem(struct item *item, int x, int y, int w)
+ {
+   // >>>>>>>>>>>>>>>>>>>> fuzzyhighlight
+-  // ==================== fuzzyhighlight
++  int r;
+   // <<<<<<<<<<<<<<<<<<<< fuzzyhighlight
+ 	if (item == sel)
+ 		drw_setscheme(drw, scheme[SchemeSel]);
+@@ -249,8 +286,9 @@ drawitem(struct item *item, int x, int y, int w)
+ 		drw_setscheme(drw, scheme[SchemeNorm]);
+ 
+   // >>>>>>>>>>>>>>>>>>>> fuzzyhighlight-highlight
+-  // ==================== fuzzyhighlight-highlight
+-	return drw_text(drw, x, y, w, bh, lrpad / 2, item->text, 0);
++  r = drw_text(drw, x, y, w, bh, lrpad / 2, item->text, 0);
++  drawhighlights(item, x, y, w);
++  return r;
+   // <<<<<<<<<<<<<<<<<<<< fuzzyhighlight-highlight
+ }
+ 
+@@ -1142,7 +1180,10 @@ usage(void)
+     "[-sb color]"
+     "[-sf color]"
+     // >>>>>>>>>>>>>>>>>>>> fuzzyhighlight
+-    // ==================== fuzzyhighlight
++    "[-nhb color]"
++    "[-nhf color]"
++    "[-shb color]"
++    "[-shf color]"
+     // <<<<<<<<<<<<<<<<<<<< fuzzyhighlight
+     "\n",
+     stderr
+@@ -1248,7 +1289,14 @@ main(int argc, char *argv[])
+     // ==================== dynamic-options
+     // <<<<<<<<<<<<<<<<<<<< dynamic-options
+     // >>>>>>>>>>>>>>>>>>>> fuzzyhighlight
+-    // ==================== fuzzyhighlight
++		else if (!strcmp(argv[i], "-nhb")) /*normal hi background color */
++			colors[SchemeNormHighlight][ColBg] = argv[++i];
++		else if (!strcmp(argv[i], "-nhf")) /*normal hi foreground color */
++			colors[SchemeNormHighlight][ColFg] = argv[++i];
++		else if (!strcmp(argv[i], "-shb")) /*selected hi background color */
++			colors[SchemeSelHighlight][ColBg] = argv[++i];
++		else if (!strcmp(argv[i], "-shf")) /*selected hi foreground color */
++			colors[SchemeSelHighlight][ColFg] = argv[++i];
+     // <<<<<<<<<<<<<<<<<<<< fuzzyhighlight
+     // >>>>>>>>>>>>>>>>>>>> grid
+     // ==================== grid
