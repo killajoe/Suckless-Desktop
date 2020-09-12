@@ -1,211 +1,267 @@
-#include<stdlib.h>
-#include<stdio.h>
-#include<string.h>
-#include<unistd.h>
-#include<signal.h>
-#include<X11/Xlib.h>
-#define LENGTH(X)               (sizeof(X) / sizeof (X[0]))
-#define CMDLENGTH		50
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <signal.h>
+#include <X11/Xlib.h>
 
-typedef struct {
-	char* icon;
-	char* command;
-	unsigned int interval;
-	unsigned int signal;
+#define LENGTH(X) (sizeof (X) / sizeof (X[0]))
+#define STR_EQ(str1, str2) !strcmp((str1), (str2))
+#define OUTPUT_SIZE 64
+#define STATUS_SIZE 256
+
+typedef struct BlockPre {
+	char *command;
+	uint interval;
+	uint signal;
+} BlockPre;
+
+typedef struct Block {
+	char output[OUTPUT_SIZE];
+	char *command;
+	uint interval;
+	uint signal;
 } Block;
-void dummysighandler(int num);
-void sighandler(int num);
-void buttonhandler(int sig, siginfo_t *si, void *ucontext);
-void getcmds(int time);
-#ifndef __OpenBSD__
-void getsigcmds(int signal);
-void setupsignals();
-void sighandler(int signum);
-#endif
-int getstatus(char *str, char *last);
-void setroot();
-void statusloop();
-void termhandler(int signum);
 
+typedef enum EBlockOrder {
+	BO_FIRST,
+	BO_NORMAL,
+	BO_LAST,
+} EBlockOrder;
 
-#include "blocks.h"
+#include "config.h"
 
-static Display *dpy;
-static int screen;
-static Window root;
-static char statusbar[LENGTH(blocks)][CMDLENGTH] = {0};
-static char statusstr[2][256];
-static char button[] = "\0";
-static int statusContinue = 1;
-static void (*writestatus) () = setroot;
+/* internal functions */
+void main(int argc, char **argv);
+void blocks_update(int time);
+void block_getcmd(Block *block, EBlockOrder order);
+EBlockOrder block_order(uint pos, uint length);
+void find_signal_command(int signal);
+void get_status(char *str, uint maxsize);
+void handler_signal(int signum);
+void handler_term(int signal);
+int strcat_safe(char *string_mod, const char *string_addto, const uint maxsize);
+void str_remove_char(char *str, char c);
+void update_status(void);
+void write_setroot(char *str);
+void write_stdout(char *str);
 
-//opens process *cmd and stores output in *output
-void getcmd(const Block *block, char *output)
-{
-	if (block->signal)
-	{
-		output[0] = block->signal;
-		output++;
-	}
-	strcpy(output, block->icon);
-	char *cmd = block->command;
-	FILE *cmdf;
-	if (*button)
-	{
-		setenv("BUTTON", button, 1);
-		cmdf = popen(cmd,"r");
-		*button = '\0';
-		unsetenv("BUTTON");
-	}
-	else
-	{
-		cmdf = popen(cmd,"r");
-	}
-	if (!cmdf)
-		return;
-	char c;
-	int i = strlen(block->icon);
-	fgets(output+i, CMDLENGTH-i, cmdf);
-	i = strlen(output);
-	if (delim != '\0' && --i)
-		output[i++] = delim;
-	output[i++] = '\0';
-	pclose(cmdf);
-}
+/* globals */
+static void (*write_fn)(char *str) = write_setroot;
+static int status_continue = 1;
+static uint blocks_len;
+static Block *blocks;
+static char status_str[STATUS_SIZE];
+static char status_str_old[STATUS_SIZE];
 
-void getcmds(int time)
-{
-	const Block* current;
-	for(int i = 0; i < LENGTH(blocks); i++)
-	{
-		current = blocks + i;
-		if ((current->interval != 0 && time % current->interval == 0) || time == -1)
-			getcmd(current,statusbar[i]);
-	}
-}
+void main(int argc, char **argv) {
+	int timer = 0;
 
-#ifndef __OpenBSD__
-void getsigcmds(int signal)
-{
-	const Block *current;
-	for (int i = 0; i < LENGTH(blocks); i++)
-	{
-		current = blocks + i;
-		if (current->signal == signal)
-			getcmd(current,statusbar[i]);
-	}
-}
-
-void setupsignals()
-{
-    /* initialize all real time signals with dummy handler */
-    for(int i = SIGRTMIN; i <= SIGRTMAX; i++)
-        signal(i, dummysighandler);
-
-	struct sigaction sa;
-
-	for(int i = 0; i < LENGTH(blocks); i++)
-	{
-		if (blocks[i].signal > 0)
-		{
-			signal(SIGRTMIN+blocks[i].signal, sighandler);
-			sigaddset(&sa.sa_mask, SIGRTMIN+blocks[i].signal); // ignore signal when handling SIGUSR1
+	for (int i = 1; i < argc; i++) {
+		if (STR_EQ("-h", argv[i]) || STR_EQ("--help", argv[i])) {
+			fprintf(stderr, "Usage: %s [{ -h | --help }]\n", argv[0]);
+			fprintf(stderr, "There are no arguments for now.\n");
+			exit(1);
+		} else {
+			fprintf(stderr, "Invalid argument: %s\n", argv[i]);
+			exit(1);
 		}
 	}
-	sa.sa_sigaction = buttonhandler;
-	sa.sa_flags = SA_SIGINFO;
-	sigaction(SIGUSR1, &sa, NULL);
-}
-#endif
 
-int getstatus(char *str, char *last)
-{
-	strcpy(last, str);
-	str[0] = '\0';
-	for(int i = 0; i < LENGTH(blocks); i++)
-		strcat(str, statusbar[i]);
-	str[strlen(str)-1] = '\0';
-	return strcmp(str, last);//0 if they are the same
-}
+	/* convert blocks_pre into blocks */
+	blocks_len = LENGTH(blocks_pre);
+	blocks = malloc((sizeof *blocks) * blocks_len);
+	for (int i = 0; i < blocks_len; i++) {
+		const BlockPre *old = &blocks_pre[i];
+		Block *new = &blocks[i];
 
-void setroot()
-{
-	if (!getstatus(statusstr[0], statusstr[1]))//Only set root if text has changed.
-		return;
-	Display *d = XOpenDisplay(NULL);
-	if (d) {
-		dpy = d;
+		new->output[0] = '\0'; /* to assert the string length is 0 if there's junk memory there (idk if this is correct) */
+		new->command = old->command;
+		new->interval = old->interval;
+		new->signal = old->signal;
 	}
-	screen = DefaultScreen(dpy);
-	root = RootWindow(dpy, screen);
-	XStoreName(dpy, root, statusstr[0]);
-	XCloseDisplay(dpy);
-}
 
-void pstdout()
-{
-	if (!getstatus(statusstr[0], statusstr[1]))//Only write out if text has changed.
-		return;
-	printf("%s\n",statusstr[0]);
-	fflush(stdout);
-}
+	/* set up standard signals */
+	signal(SIGTERM, handler_term);
+	signal(SIGINT, handler_term);
 
-
-void statusloop()
-{
 #ifndef __OpenBSD__
-	setupsignals();
+	/* set up custom signals */
+	if (signal_all > 0) {
+		signal(SIGRTMIN + signal_all, handler_signal);
+	}
+	for (int i = 0; i < blocks_len; i++) {
+		Block *current = &blocks[i];
+		int sig = current->signal;
+		if (sig > 0) signal(SIGRTMIN + sig, handler_signal);
+	}
 #endif
-	int i = 0;
-	getcmds(-1);
-	while(statusContinue)
-	{
-		getcmds(i);
-		writestatus();
+
+	blocks_update(-1);
+	while (status_continue) {
+		blocks_update(timer);
+
+		/* put old string to status_str_old */
+		status_str_old[0] = '\0';
+		strcat_safe(status_str_old, status_str, STATUS_SIZE);
+
+		update_status();
 		sleep(1.0);
-		i++;
+		timer++;
 	}
 }
 
+void blocks_update(int time) {
+	for (int i = 0; i < blocks_len; i++) {
+		Block *current = &blocks[i];
+		if ((current->interval != 0 && time % current->interval == 0)
+		    || (time == -1)) {
+			EBlockOrder order = block_order(i, blocks_len);
+			block_getcmd(current, order);
+		}
+	}
+}
+
+void block_getcmd(Block *block, EBlockOrder order) {
+	char str[OUTPUT_SIZE]; /* idk why I had to make this here but ok */
+	FILE *cmdf;
+
+	/* clean output string */
+	for (int i = 0; i < OUTPUT_SIZE; i++) {
+		str[i] = '\0';
+	}
+
+	/* prefix */
+	if (order == BO_FIRST) {
+		strcat_safe(str, all_prefix, OUTPUT_SIZE);
+	}
+
+	/* command output */
+	char cmd_str[OUTPUT_SIZE];
+	cmdf = popen(block->command, "r");
+	strcat_safe(str, block_prefix, OUTPUT_SIZE);
+	if (cmdf) {
+		fgets(cmd_str, OUTPUT_SIZE - strlen(block->output) - 1, cmdf);
+		pclose(cmdf);
+		strcat_safe(str, cmd_str, OUTPUT_SIZE);
+	} else {
+		strcat_safe(str, "FAILED", OUTPUT_SIZE);
+	}
+	strcat_safe(str, block_postfix, OUTPUT_SIZE);
+
+	/* delimeter or postfix */
+	if (order == BO_LAST) {
+		strcat_safe(str, all_postfix, OUTPUT_SIZE);
+	} else {
+		strcat_safe(str, block_delimeter, OUTPUT_SIZE);
+	}
+
+	str_remove_char(str, '\n');
+	strcpy(block->output, str);
+}
+
+EBlockOrder block_order(uint pos, uint length) {
+	if (pos == 0) {
+		return BO_FIRST;
+	} else if (pos < length - 1) {
+		return BO_NORMAL;
+	} else {
+		return BO_LAST;
+	}
+}
+
+void find_signal_command(int signal) {
+	for (int i = 0; i < blocks_len; i++) {
+		Block *current = &blocks[i];
+		if (current->signal + SIGRTMIN == signal) {
+			EBlockOrder order = block_order(i, blocks_len);
+			block_getcmd(current, order);
+		}
+	}
+}
+
+void get_status(char *str, uint maxsize) {
+	for (int i = 0; i < blocks_len; i++) {
+		Block *current = &blocks[i];
+		strcat_safe(str, current->output, maxsize);
+	}
+}
+
+void handler_signal(int signum) {
 #ifndef __OpenBSD__
-/* this signal handler should do nothing */
-void dummysighandler(int signum)
-{
-    return;
-}
+	if (signum == signal_all + SIGRTMIN) {
+		blocks_update(-1);
+	} else {
+		find_signal_command(signum);
+		update_status();
+	}
 #endif
-
-#ifndef __OpenBSD__
-void sighandler(int signum)
-{
-	getsigcmds(signum-SIGRTMIN);
-	writestatus();
 }
 
-void buttonhandler(int sig, siginfo_t *si, void *ucontext)
-{
-	*button = '0' + si->si_value.sival_int & 0xff;
-	getsigcmds(si->si_value.sival_int >> 8);
-	writestatus();
-}
-#endif
+void handler_term(int signal) {
+	/* free resources */
+	free(blocks);
 
-void termhandler(int signum)
-{
-	statusContinue = 0;
+	status_continue = 0;
 	exit(0);
 }
 
-int main(int argc, char** argv)
-{
-	for(int i = 0; i < argc; i++)
-	{
-		if (!strcmp("-d",argv[i]))
-			delim = argv[++i][0];
-		else if(!strcmp("-p",argv[i]))
-			writestatus = pstdout;
+/* returns zero if size has exceeded, nonzero if there's still free space */
+int strcat_safe(char *string_mod, const char *string_addto, const uint maxsize) {
+	uint strpos = strlen(string_mod);
+	uint i;
+
+	for (i = 0; string_addto[i]; i++) {
+		if (strpos + i == maxsize - 1) break;
+		string_mod[strpos + i] = string_addto[i];
 	}
-	signal(SIGTERM, termhandler);
-	signal(SIGINT, termhandler);
-	statusloop();
+
+	string_mod[strpos + i] = '\0';
+	return (strpos + i == maxsize - 1) ? 0 : 1;
+}
+
+void str_remove_char(char *str, char c) {
+	/* stole and improved this one from Luke Smith */
+	char *read = str;
+	char *write = str;
+
+	while (*read) {
+		while (*read == c) {
+			read++;
+		}
+		*write = *read;
+		read++;
+		write++;
+	}
+	*write = 0;
+}
+
+void update_status(void) {
+	/* get status */
+	status_str[0] = '\0';
+	get_status(status_str, STATUS_SIZE);
+
+	/* only write if status has changed */
+	if (!STR_EQ(status_str, status_str_old)) {
+		write_fn(status_str);
+	}
+}
+
+void write_setroot(char *str) {
+	Display *display;
+	Window root;
+	int screen;
+
+	display = XOpenDisplay(NULL);
+	if (!display) return;
+
+	screen = DefaultScreen(display);
+	root = RootWindow(display, screen);
+	XStoreName(display, root, str);
+	XCloseDisplay(display);
+}
+
+void write_stdout(char *str) {
+	printf("%s\n", str);
+	fflush(stdout);
 }
