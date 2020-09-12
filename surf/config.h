@@ -209,4 +209,4 @@ static Button buttons[] = {
 	{ OnMedia,      MODKEY,         1,      clickexternplayer, { 0 },       1 },
 };
 
-#define HOMEPAGE "file:///home/dobbie/Suckless/surf/startpage/index.html"
+#define HOMEPAGE "https://start.duckduckgo.com/"

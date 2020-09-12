@@ -25,7 +25,7 @@ static const unsigned int systraypinning = 0;   /* 0: sloppy systray follows sel
 static const unsigned int systrayspacing = 0;   /* systray spacing */
 static const int systraypinningfailfirst = 1;   /* 1: if pinning fails, display systray on the first monitor, False: display systray on the last monitor*/
 static const int showsystray             = 1;   /* 0 means no systray */
-static const char *fonts[]          	 = {"Hack Nerd Font:Regular:size=5", "Material Design Icons:Regular:pixelsize=7:antialias:true"};
+static const char *fonts[]         		 = {"Ubuntu:Regular:size=6", "Material Design Icons:Regular:pixelsize=22:antialias=true"};
 static const char dmenufont[]            = "SF Pro Text:size=5";
 static const char col_gray1[]            = "#141414";
 static const char col_gray2[]            = "#444444";
@@ -34,7 +34,8 @@ static const char col_gray4[]            = "#c6c6c6";
 static const char col_cyan[]             = "#212121";
 static const char col_blue[]			 = "#6699cc";
 /*static const unsigned int baralpha       = 0xd0;*/
-static const unsigned int baralpha       = 225;
+/*static const unsigned int baralpha       = 225;*/
+static const unsigned int baralpha       = 255;
 static const unsigned int borderalpha    = 255;
 static const char *colors[][3] = {
 	/*               fg         bg         border   */
@@ -89,21 +90,21 @@ static const int layoutaxis[] = {
 
 static const Layout layouts[] = {
 	/* symbol	arrange function */
-	{ "⟦➘⟧",	dwindle }, /* first entry is default */
+	{ "󰕴",	dwindle }, /* first entry is default */
+	{ "󰙀",	tile },
+	{ "󰋁", grid },
+	{ "󱒅", centeredmaster },
+	{ "󰕬", centeredfloatingmaster },
 	{ "[]=",	monocle },
-	{ "=M=",	centeredmaster },
 	{ "⧉⟧⧠",	NULL },    /* no layout function means floating behavior */
-	{ "⧉M⧠",	centeredfloatingmaster },
 	{ "⚎⚎⚎",	bstack },
 	{ "☰☰☰",	bstackhoriz },
-	{ "𝍖𝍖𝍖",	grid },
 	{ ":::",	gaplessgrid },
 	{ "---",	horizgrid },
 	{ "###",	nrowgrid },
 	{ "⟦@⟧",	spiral },
 	{ "[M]",	monocle },
 	{ "D[]",	deck },
-	{ "[]=",	tile },
 	{ NULL,		NULL },
 };
 
