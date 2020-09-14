@@ -15,6 +15,6 @@ static const BlockPre blocks_pre[] = {
 	/* command, update interval, update signal */
 	{"dwmblocks-ram", 5, 0},
 	{"dwmblocks-cpu", 10, 0},
-	{"dwmblocks-music", 5, 0},
+	{"dwmblocks-music", 30, 0},
 	{"dwmblocks-clock", 5, 0},
 };

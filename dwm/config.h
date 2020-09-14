@@ -25,7 +25,7 @@ static const unsigned int systraypinning = 0;   /* 0: sloppy systray follows sel
 static const unsigned int systrayspacing = 0;   /* systray spacing */
 static const int systraypinningfailfirst = 1;   /* 1: if pinning fails, display systray on the first monitor, False: display systray on the last monitor*/
 static const int showsystray             = 1;   /* 0 means no systray */
-static const char *fonts[]         		 = {"Ubuntu:Regular:size=6", "Material Design Icons:Regular:pixelsize=22:antialias=true"};
+static const char *fonts[]         		 = {"SF Pro Text:size=5", "Material Design Icons:Regular:pixelsize=22:antialias=true"};
 static const char dmenufont[]            = "SF Pro Text:size=5";
 static const char col_gray1[]            = "#141414";
 static const char col_gray2[]            = "#444444";
