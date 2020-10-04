@@ -248,6 +248,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,				XK_p,		spawn,			SHCMD("clipmenu") },
 	{ MODKEY,						XK_m,		spawn,			SHCMD("st -c ncmpcpp -e ncmpcpp") },
 	{ MODKEY,						XK_f,		spawn,			{.v = filecmd } },
+	{ MODKEY|ShiftMask,				XK_m,		spawn,			SHCMD ("flatpak run com.mojang.Minecraft") },
 };
 
 /* button definitions */
