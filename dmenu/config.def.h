@@ -85,5 +85,5 @@ static unsigned int border_width = 1;
 // <<<<<<<<<<<<<<<<<<<< navhistory
 
 // >>>>>>>>>>>>>>>>>>>> line-height
-static unsigned int lineheight = 0;         /* -lh option; minimum height of a menu line     */
+static unsigned int lineheight = 26;         /* -lh option; minimum height of a menu line     */
 // <<<<<<<<<<<<<<<<<<<< line-height

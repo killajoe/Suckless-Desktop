@@ -10,17 +10,17 @@ static const int topbar             = 1;        /* 0 means bottom bar */
 static const int usealtbar          = 1;        /* 1 means use non-dwm status bar */
 static const char *altbarclass      = "Polybar"; /* Alternate bar class name */
 static const char *alttrayname      = "tray";    /* Polybar tray instance name */
-static const Bool viewontag         = False;     /* Switch view on tag switch */
+static const Bool viewontag         = True;     /* Switch view on tag switch */
 static const int horizpadbar        = 2;        /* horizontal padding for statusbar */
 static const int vertpadbar         = 21;        /* vertical padding for statusbar */
 static const char *fonts[]          = { "Liberation Mono:size=9",
                                         "Material Icons:size=14" };
 static const char dmenufont[]       = "monospace:size=10";
 static char normbgcolor[]           = "#141414";
-static char normbordercolor[]       = "#212121";
+static char normbordercolor[]       = "#7e9cb9";
 static char normfgcolor[]           = "#fffefe";
 static char selfgcolor[]            = "#c6c6c6";
-static char selbordercolor[]        = "#404040";
+static char selbordercolor[]        = "#141414";
 static char selbgcolor[]            = "#404040";
 static char *colors[][3] = {
        /*               fg           bg           border   */
@@ -35,19 +35,20 @@ static const char *xres = "$HOME/.Xresources";
 /* tagging */
 static const char *tags[] = { "", "", "", "", "", "", "", "", "", "" };
 
+#include "fibonacci.c"
 static const Rule rules[] = {
 	/* xprop(1):
 	 *	WM_CLASS(STRING) = instance, class
 	 *	WM_NAME(STRING) = title
 	 */
-	/* class        instance    title               tags mask     isfloating   isterminal  noswallow   monitor */
-	{ "firefox",      	NULL,   NULL,               1, 		       0,           0,          0,          -1 },
-    { "Thunar",      	NULL,   NULL,               1 << 4,	       0,           0,          0,          -1 },
-    { "File-Roller",   	NULL,   NULL,               1 << 4,        0,           0,          0,          -1 },
-    { "Easytag",    	NULL,   NULL,               1 << 8,        0,           0,          0,          -1 },
-    { "ncmpcpp",	 	NULL,   NULL,               1 << 1,        0,           1,          0,          -1 },
-    { "Subl3",		 	NULL,   NULL,               1 << 6,        0,           0,          0,          -1 },
-	{ "st",         	NULL,   NULL,               1 << 1,        0,           1,          0,          -1 },
+	/* class        instance    title               tags mask     isfloating  switchtotag isterminal  monitor */
+	{ "firefox",      	NULL,   NULL,               1, 		       0,           	1,		0,          -1 },
+    { "Thunar",      	NULL,   NULL,               1 << 4,	       0,           	1,		0,          -1 },
+    { "File-Roller",   	NULL,   NULL,               1 << 4,        0,          		0,		0,          -1 },
+    { "Easytag",    	NULL,   NULL,               1 << 8,        0,           	1,		0,          -1 },
+    { "ncmpcpp",	 	NULL,   NULL,               1 << 1,        0,           	1,		1,          -1 },
+    { "Subl3",		 	NULL,   NULL,               1 << 6,        0,           	1,		0,          -1 },
+	{ "st",         	NULL,   NULL,               1 << 1,        0,           	1,		1,          -1 },
 };
 
 /* layout(s) */
@@ -57,11 +58,13 @@ static const int resizehints = 0;    /* 1 means respect size hints in tiled resi
 
 static const Layout layouts[] = {
 	/* symbol     arrange function */
-	{ "[]=",      tile },    /* first entry is default */
+	{ "",	dwindle },    /* first entry is default */
+	{ "[@]",      spiral },
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ "[M]",      monocle },
-	{ "+",        gaplessgrid }
-};
+	{ "+",        gaplessgrid },
+ 	{ "[]=",      tile }, 
+ };
 
 /* key definitions */
 #define MODKEY Mod4Mask
@@ -92,6 +95,7 @@ static const char *editcmd[] = { "subl3", NULL };
 static const char *vimcmd[] = { "gvim", NULL };
 
 #include "movestack.c"
+#include "focusurgent.c"
 #include <X11/XF86keysym.h>
 static Key keys[] = {
 	/* modifier                     key        function        argument */
@@ -121,13 +125,16 @@ static Key keys[] = {
 	{ MODKEY,                       XK_g,      setlayout,      {.v = &layouts[3]} },
 //	{ MODKEY,                       XK_space,  setlayout,      {0} },
 	{ MODKEY|ShiftMask,             XK_space,  togglefloating, {0} },
-	{ MODKEY|ShiftMask,             XK_s,      togglesticky,   {0} },
+	{ MODKEY|ControlMask|ShiftMask, XK_s,      togglesticky,   {0} },
+	{ MODKEY,                       XK_r,      setlayout,      {.v = &layouts[3]} },
+	{ MODKEY|ShiftMask,             XK_r,      setlayout,      {.v = &layouts[4]} },
 	{ MODKEY,                       XK_Tab,    view,           {.ui = ~0 } },
 	{ MODKEY|ShiftMask,             XK_Tab,    tag,            {.ui = ~0 } },
 	{ MODKEY|ControlMask,           XK_j,      focusmon,       {.i = -1 } },
 	{ MODKEY|ControlMask,           XK_k,      focusmon,       {.i = +1 } },
 	{ MODKEY|ControlMask|ShiftMask, XK_j,      tagmon,         {.i = -1 } },
 	{ MODKEY|ControlMask|ShiftMask, XK_k,      tagmon,         {.i = +1 } },
+	{ MODKEY,                       XK_u,      focusurgent,    {0} },
 //	{ MODKEY,                       XK_minus,  setgaps,        {.i = -1 } },
 //	{ MODKEY,                       XK_equal,  setgaps,        {.i = +1 } },
 //	{ MODKEY|ShiftMask,             XK_equal,  setgaps,        {.i = 0  } },

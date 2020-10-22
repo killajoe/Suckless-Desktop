@@ -141,7 +141,7 @@ struct Monitor {
 	int ltaxis[3];
 	int nmaster;
 	int num;
-	int by, bh;           /* bar geometry */
+	int by;               /* bar geometry */
 	int mx, my, mw, mh;   /* screen size */
 	int wx, wy, ww, wh;   /* window area  */
 	int gappih;           /* horizontal gap between windows */
@@ -224,7 +224,6 @@ static void incnmaster(const Arg *arg);
 static void keypress(XEvent *e);
 static void killclient(const Arg *arg);
 static void manage(Window w, XWindowAttributes *wa);
-static void managealtbar(Window win, XWindowAttributes *wa);
 static void mappingnotify(XEvent *e);
 static void maprequest(XEvent *e);
 static void mirrorlayout(const Arg *arg);
@@ -275,7 +274,6 @@ static void toggletag(const Arg *arg);
 static void toggleview(const Arg *arg);
 static void unfocus(Client *c, int setfocus);
 static void unmanage(Client *c, int destroyed);
-static void unmanagealtbar(Window w);
 static void unmapnotify(XEvent *e);
 static void updatebarpos(Monitor *m);
 static void updatebars(void);
@@ -669,10 +667,8 @@ cleanupmon(Monitor *mon)
 		for (m = mons; m && m->next != mon; m = m->next);
 		m->next = mon->next;
 	}
-	if (!usealtbar) {
-		XUnmapWindow(dpy, mon->barwin);
-		XDestroyWindow(dpy, mon->barwin);
-	}
+	XUnmapWindow(dpy, mon->barwin);
+	XDestroyWindow(dpy, mon->barwin);
 	free(mon);
 }
 
@@ -791,7 +787,7 @@ configurenotify(XEvent *e)
 				for (c = m->clients; c; c = c->next)
 					if (c->isfullscreen)
 						resizeclient(c, m->mx, m->my, m->mw, m->mh);
-				XMoveResizeWindow(dpy, m->barwin, m->wx, m->by, m->ww, m->bh);
+				XMoveResizeWindow(dpy, m->barwin, m->wx, m->by, m->ww, bh);
 			}
 			focus(NULL);
 			arrange(NULL);
@@ -1476,25 +1472,6 @@ manage(Window w, XWindowAttributes *wa)
 }
 
 void
-managealtbar(Window win, XWindowAttributes *wa)
-{
-	Monitor *m;
-	if (!(m = recttomon(wa->x, wa->y, wa->width, wa->height)))
-		return;
-
-	m->barwin = win;
-	m->by = wa->y;
-	bh = m->bh = wa->height;
-	updatebarpos(m);
-	arrange(m);
-	XSelectInput(dpy, win, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
-	XMoveResizeWindow(dpy, win, wa->x, wa->y, wa->width, wa->height);
-	XMapWindow(dpy, win);
-	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32, PropModeAppend,
-		(unsigned char *) &win, 1);
-}
-
-void
 mappingnotify(XEvent *e)
 {
 	XMappingEvent *ev = &e->xmapping;
@@ -1520,9 +1497,7 @@ maprequest(XEvent *e)
 		return;
 	if (wa.override_redirect)
 		return;
-	if (usealtbar && wmclasscontains(ev->window, altbarclass, ""))
-		managealtbar(ev->window, &wa);
-	else if (!wintoclient(ev->window))
+	if (!wintoclient(ev->window))
 		manage(ev->window, &wa);
 }
 
@@ -1964,9 +1939,7 @@ scan(void)
 			if (!XGetWindowAttributes(dpy, wins[i], &wa)
 			|| wa.override_redirect || XGetTransientForHint(dpy, wins[i], &d1))
 				continue;
-			if (usealtbar && wmclasscontains(wins[i], altbarclass, ""))
-				managealtbar(wins[i], &wa);
-			else if (wa.map_state == IsViewable || getstate(wins[i]) == IconicState)
+			if (wa.map_state == IsViewable || getstate(wins[i]) == IconicState)
 				manage(wins[i], &wa);
 		}
 		for (i = 0; i < num; i++) { /* now the transients */
@@ -2310,7 +2283,6 @@ setup(void)
 	XSelectInput(dpy, root, wa.event_mask);
 	grabkeys();
 	focus(NULL);
-	spawnbar();
 }
 
 
@@ -2389,13 +2361,6 @@ systraytomon(Monitor *m) {
 	if(systraypinningfailfirst && n < systraypinning)
 		return mons;
 	return t;
-}
-
-void
-spawnbar()
-{
-	if (*altbarcmd)
-		system(altbarcmd);
 }
 
 void
@@ -2662,25 +2627,9 @@ unmanage(Client *c, int destroyed)
 }
 
 void
-unmanagealtbar(Window w)
-{
-	Monitor *m = wintomon(w);
-
-	if (!m)
-		return;
-
-	m->barwin = 0;
-	m->by = 0;
-	m->bh = 0;
-	updatebarpos(m);
-	arrange(m);
-}
-
-void
 unmapnotify(XEvent *e)
 {
 	Client *c;
-	Monitor *m;
 	XUnmapEvent *ev = &e->xunmap;
 
 	if ((c = wintoclient(ev->window))) {
@@ -2734,11 +2683,11 @@ updatebarpos(Monitor *m)
 	m->wy = m->my;
 	m->wh = m->mh;
 	if (m->showbar) {
-		m->wh -= m->bh;
+		m->wh -= bh;
 		m->by = m->topbar ? m->wy : m->wy + m->wh;
-		m->wy = m->topbar ? m->wy + m->bh : m->wy;
+		m->wy = m->topbar ? m->wy + bh : m->wy;
 	} else
-		m->by = -m->bh;
+		m->by = -bh;
 }
 
 void
@@ -3148,28 +3097,6 @@ wintosystrayicon(Window w) {
 		return i;
 	for (i = systray->icons; i && i->win != w; i = i->next);
 	return i;
-}
-
-int
-wmclasscontains(Window win, const char *class, const char *name)
-{
-	XClassHint ch = { NULL, NULL };
-	int res = 1;
-
-	if (XGetClassHint(dpy, win, &ch)) {
-		if (ch.res_name && strstr(ch.res_name, name) == NULL)
-			res = 0;
-		if (ch.res_class && strstr(ch.res_class, class) == NULL)
-			res = 0;
-	} else
-		res = 0;
-
-	if (ch.res_class)
-		XFree(ch.res_class);
-	if (ch.res_name)
-		XFree(ch.res_name);
-
-	return res;
 }
 
 /* There's no way to check accesses to destroyed windows, thus those cases are
