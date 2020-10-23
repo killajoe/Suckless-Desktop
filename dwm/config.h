@@ -31,7 +31,9 @@ static const char col_gray1[]            = "#141414";
 static const char col_gray2[]            = "#505050";
 static const char col_gray3[]            = "#353535";
 static const char col_gray4[]            = "#c6c6c6";
-static const char col_cyan[]             = "#212121";
+static const char col_gray5[]            = "#fffefe";
+static const char col_gray6[]            = "#292929";
+static const char col_cyan[]             = "#7e9cb9";
 static const char col_blue[]			 = "#6699cc";
 /*static const unsigned int baralpha       = 0xd0;*/
 /*static const unsigned int baralpha       = 225;*/
@@ -40,7 +42,7 @@ static const unsigned int borderalpha    = 255;
 static const char *colors[][3] = {
 	/*               fg         bg         border   */
 	[SchemeNorm] = { col_gray4, col_gray1, col_blue },
-	[SchemeSel]  = { col_gray4, col_gray2,  col_cyan  },
+	[SchemeSel]  = { col_gray5, col_gray6,  col_cyan  },
 };
 static const unsigned int alphas[][3] = {
 	/*               fg      bg        border     */
