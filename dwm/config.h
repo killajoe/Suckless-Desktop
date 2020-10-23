@@ -28,7 +28,7 @@ static const int showsystray             = 1;   /* 0 means no systray */
 static const char *fonts[]         		 = {"SF Pro Text:size=5", "Font Awesome 5 Pro:Solid:pixelsize=12:antialias=true", "Font Awesome 5 Brands:Regular:pixelsize=12:antialias=true", "Font Awesome 5 Pro:Solid:pixelsize=12:antialias=true", "Material Design Icons:Regular:pixelsize=22:antialias=true"};
 static const char dmenufont[]            = "SF Pro Text:size=5";
 static const char col_gray1[]            = "#141414";
-static const char col_gray2[]            = "#444444";
+static const char col_gray2[]            = "#505050";
 static const char col_gray3[]            = "#353535";
 static const char col_gray4[]            = "#c6c6c6";
 static const char col_cyan[]             = "#212121";
@@ -40,7 +40,7 @@ static const unsigned int borderalpha    = 255;
 static const char *colors[][3] = {
 	/*               fg         bg         border   */
 	[SchemeNorm] = { col_gray4, col_gray1, col_blue },
-	[SchemeSel]  = { col_blue, col_gray1,  col_cyan  },
+	[SchemeSel]  = { col_gray4, col_gray2,  col_cyan  },
 };
 static const unsigned int alphas[][3] = {
 	/*               fg      bg        border     */
