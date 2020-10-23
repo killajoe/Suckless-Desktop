@@ -40,7 +40,7 @@ static const unsigned int borderalpha    = 255;
 static const char *colors[][3] = {
 	/*               fg         bg         border   */
 	[SchemeNorm] = { col_gray4, col_gray1, col_blue },
-	[SchemeSel]  = { col_gray4, col_cyan,  col_cyan  },
+	[SchemeSel]  = { col_blue, col_gray1,  col_cyan  },
 };
 static const unsigned int alphas[][3] = {
 	/*               fg      bg        border     */
