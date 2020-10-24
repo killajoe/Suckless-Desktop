@@ -25,13 +25,16 @@ static const unsigned int systraypinning = 0;   /* 0: sloppy systray follows sel
 static const unsigned int systrayspacing = 0;   /* systray spacing */
 static const int systraypinningfailfirst = 1;   /* 1: if pinning fails, display systray on the first monitor, False: display systray on the last monitor*/
 static const int showsystray             = 1;   /* 0 means no systray */
-static const char *fonts[]         		 = {"SF Pro Text:size=5", "Material Design Icons:Regular:pixelsize=22:antialias=true"};
+static const char *fonts[]         		 = {"SF Pro Text:size=5", "Font Awesome 5 Pro:style=Solid:pixelsize=12:antialias=true", "Font Awesome 5 Brands:style=Solid:pixelsize=12:antialias=true", "Material Design Icons:Regular:pixelsize=22:antialias=true"};
 static const char dmenufont[]            = "SF Pro Text:size=5";
 static const char col_gray1[]            = "#141414";
-static const char col_gray2[]            = "#444444";
+static const char col_gray2[]            = "#505050";
 static const char col_gray3[]            = "#353535";
 static const char col_gray4[]            = "#c6c6c6";
-static const char col_cyan[]             = "#212121";
+static const char col_gray5[]            = "#fffefe";
+static const char col_gray6[]            = "#292929";
+static const char col_gray7[]            = "#212121";
+static const char col_cyan[]             = "#7e9cb9";
 static const char col_blue[]			 = "#6699cc";
 /*static const unsigned int baralpha       = 0xd0;*/
 /*static const unsigned int baralpha       = 225;*/
@@ -40,7 +43,7 @@ static const unsigned int borderalpha    = 255;
 static const char *colors[][3] = {
 	/*               fg         bg         border   */
 	[SchemeNorm] = { col_gray4, col_gray1, col_blue },
-	[SchemeSel]  = { col_gray4, col_cyan,  col_cyan  },
+	[SchemeSel]  = { col_gray5, col_gray6,  col_gray7  },
 };
 static const unsigned int alphas[][3] = {
 	/*               fg      bg        border     */
@@ -49,7 +52,8 @@ static const unsigned int alphas[][3] = {
 };
 
 /* tagging */
-static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+static const char *tags[] = { "", "", "", "", "", "", "", "", "", "" };
+/*static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };*/
 /*static const char *tags[] = { "", "", "", "", "", "", "", "", "" };*/
 
 static const Rule rules[] = {
@@ -59,16 +63,17 @@ static const Rule rules[] = {
 	 *  WM_WINDOW_ROLE(STRING) = role
 	 */
 	/* class            role                          instance     title   tags mask  switchtag  iscentered   isfloating   monitor */
-	{ "Gimp",           NULL,                         NULL,        NULL,   1 << 4,    1,         0,           1,            1 },
+	{ "Gimp",           NULL,                         NULL,        NULL,   1 << 9,    1,         0,           1,            1 },
 	{ "firefox",        NULL,                         NULL,        NULL,   1,	      1,         0,           0,            1 },
 	{ "st",	            NULL,                         NULL,        NULL,   1 << 1,    1,         0,           0,            1 },
 	{ "qutebrowser",    NULL,                         NULL,        NULL,   1,	      1,         0,           0,            1 },
 	{ "firefox",		"GtkFileChooserDialog",       "Save File", NULL,   0,         0,         1,           1,            1 },
-	{ "Slack",          NULL,                         NULL,        NULL,   1 << 5,    1,         0,           0,            1 },
+	{ "mpv",          NULL,                         NULL,        NULL,   1 << 5,    1,         0,           0,            1 },
 	{ "Steam",          NULL,                         NULL,        NULL,   1 << 7,    1,         0,           0,            1 },
 	{ "Transmission-gtk",NULL,                        NULL,        NULL,   1 << 2,    1,         0,           0,            1 },
 	{ "SoulseekQt",		NULL,                         NULL,        NULL,   1 << 2,    1,         0,           0,            1 },
 	{ "Subl3",		    NULL,                         NULL,        NULL,   1 << 6,    1,         0,           0,            1 },
+	{ "Code",		    NULL,                         NULL,        NULL,   1 << 6,    1,         0,           0,            1 },
 	{ "Thunar",		    NULL,                         NULL,        NULL,   1 << 4,    1,         0,           0,            1 },
 	{ "File-roller",    NULL,                         NULL,        NULL,   1 << 4,    1,         1,           1,            1 },
 	{ "Easytag",	    NULL,                         NULL,        NULL,   1 << 8,    1,         1,           0,            1 },
@@ -245,7 +250,7 @@ static Key keys[] = {
 	{ MODKEY,						XK_x,		spawn,			{.v = exitcmd } },
 	{ MODKEY,						XK_e,		spawn,			{.v = editcmd } },
 	{ MODKEY|ShiftMask, 			XK_e,		spawn,			{.v = vimcmd } },
-	{ MODKEY|ShiftMask,				XK_p,		spawn,			SHCMD("clipmenu") },
+	{ MODKEY|ShiftMask,				XK_p,		spawn,			SHCMD("greenclip print | sed '/^$/d' | dmenu -i -l 10 -p clipboard | xargs -r -d'\n' -I '{}' greenclip print '{}'") },
 	{ MODKEY,						XK_m,		spawn,			SHCMD("st -c ncmpcpp -e ncmpcpp") },
 	{ MODKEY,						XK_f,		spawn,			{.v = filecmd } },
 	{ MODKEY|ShiftMask,				XK_m,		spawn,			SHCMD ("flatpak run com.mojang.Minecraft") },
