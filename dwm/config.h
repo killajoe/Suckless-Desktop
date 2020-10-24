@@ -25,7 +25,7 @@ static const unsigned int systraypinning = 0;   /* 0: sloppy systray follows sel
 static const unsigned int systrayspacing = 0;   /* systray spacing */
 static const int systraypinningfailfirst = 1;   /* 1: if pinning fails, display systray on the first monitor, False: display systray on the last monitor*/
 static const int showsystray             = 1;   /* 0 means no systray */
-static const char *fonts[]         		 = {"SF Pro Text:size=5", "Font Awesome 5 Pro:Solid:pixelsize=12:antialias=true", "Font Awesome 5 Brands:Regular:pixelsize=12:antialias=true", "Font Awesome 5 Pro:Solid:pixelsize=12:antialias=true", "Material Design Icons:Regular:pixelsize=22:antialias=true"};
+static const char *fonts[]         		 = {"SF Pro Text:size=5", "Font Awesome 5 Pro:style=Solid:pixelsize=12:antialias=true", "Font Awesome 5 Brands:style=Solid:pixelsize=12:antialias=true", "Material Design Icons:Regular:pixelsize=22:antialias=true"};
 static const char dmenufont[]            = "SF Pro Text:size=5";
 static const char col_gray1[]            = "#141414";
 static const char col_gray2[]            = "#505050";
@@ -52,8 +52,8 @@ static const unsigned int alphas[][3] = {
 };
 
 /* tagging */
-/*static const char *tags[] = { "", "", "", "", "", "", "", "", "", "" };*/
-static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+static const char *tags[] = { "", "", "", "", "", "", "", "", "", "" };
+/*static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };*/
 /*static const char *tags[] = { "", "", "", "", "", "", "", "", "" };*/
 
 static const Rule rules[] = {
@@ -63,12 +63,12 @@ static const Rule rules[] = {
 	 *  WM_WINDOW_ROLE(STRING) = role
 	 */
 	/* class            role                          instance     title   tags mask  switchtag  iscentered   isfloating   monitor */
-	{ "Gimp",           NULL,                         NULL,        NULL,   1 << 4,    1,         0,           1,            1 },
+	{ "Gimp",           NULL,                         NULL,        NULL,   1 << 9,    1,         0,           1,            1 },
 	{ "firefox",        NULL,                         NULL,        NULL,   1,	      1,         0,           0,            1 },
 	{ "st",	            NULL,                         NULL,        NULL,   1 << 1,    1,         0,           0,            1 },
 	{ "qutebrowser",    NULL,                         NULL,        NULL,   1,	      1,         0,           0,            1 },
 	{ "firefox",		"GtkFileChooserDialog",       "Save File", NULL,   0,         0,         1,           1,            1 },
-	{ "Slack",          NULL,                         NULL,        NULL,   1 << 5,    1,         0,           0,            1 },
+	{ "mpv",          NULL,                         NULL,        NULL,   1 << 5,    1,         0,           0,            1 },
 	{ "Steam",          NULL,                         NULL,        NULL,   1 << 7,    1,         0,           0,            1 },
 	{ "Transmission-gtk",NULL,                        NULL,        NULL,   1 << 2,    1,         0,           0,            1 },
 	{ "SoulseekQt",		NULL,                         NULL,        NULL,   1 << 2,    1,         0,           0,            1 },
