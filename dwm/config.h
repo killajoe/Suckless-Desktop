@@ -10,8 +10,8 @@ static const unsigned int gappov         = 10;   /* vert outer gap between windo
 static const int smartgaps               = 1;   /* 1 means no outer gap when there is only one window */
 static const int showbar                 = 1;   /* 0 means no bar */
 static const int topbar                  = 1;   /* 0 means bottom bar */
-static const int horizpadbar             = 2;   /* horizontal padding for statusbar */
-static const int vertpadbar              = 6;   /* vertical padding for statusbar */
+static const int horizpadbar             = 6;   /* horizontal padding for statusbar */
+static const int vertpadbar              = 10;   /* vertical padding for statusbar */
 static const int focusonnetactive        = 1;   /* 0 means default behaviour, 1 means auto-focus on urgent window */
 static const int attachmode              = 2;   /* 0 = master (default), 1 = above, 2 = aside, 3 = below, 4 = bottom */
 static const int pertag                  = 1;   /* 0 means global layout across all tags (default), 1 = layout per tag (pertag) */
@@ -38,7 +38,7 @@ static const char col_cyan[]             = "#7e9cb9";
 static const char col_blue[]			 = "#6699cc";
 /*static const unsigned int baralpha       = 0xd0;*/
 /*static const unsigned int baralpha       = 225;*/
-static const unsigned int baralpha       = 255;
+static const unsigned int baralpha       = 235;
 static const unsigned int borderalpha    = 255;
 static const char *colors[][3] = {
 	/*               fg         bg         border   */
