@@ -251,10 +251,12 @@ static Key keys[] = {
 	{ MODKEY,						XK_x,		spawn,			{.v = exitcmd } },
 	{ MODKEY,						XK_e,		spawn,			{.v = editcmd } },
 	{ MODKEY|ShiftMask, 			XK_e,		spawn,			{.v = vimcmd } },
-	{ MODKEY|ShiftMask,				XK_p,		spawn,			SHCMD("greenclip print | sed '/^$/d' | dmenu -i -l 10 -p clipboard | xargs -r -d'\n' -I '{}' greenclip print '{}'") },
+	/*{ MODKEY|ShiftMask,				XK_p,		spawn,			SHCMD("greenclip print | sed '/^$/d' | dmenu -i -l 10 -p clipboard | xargs -r -d'\n' -I '{}' greenclip print '{}'") },*/
+	{ MODKEY|ShiftMask,				XK_p,		spawn,			SHCMD("clipmenu") },
 	{ MODKEY,						XK_m,		spawn,			SHCMD("st -c ncmpcpp -e ncmpcpp") },
 	{ MODKEY,						XK_f,		spawn,			{.v = filecmd } },
 	{ MODKEY|ShiftMask,				XK_m,		spawn,			SHCMD ("flatpak run com.mojang.Minecraft") },
+	{ MODKEY|ShiftMask,				XK_w,		spawn,			SHCMD ("vivaldi-stable --force-device-scale-factor=1.5") },
 };
 
 /* button definitions */
