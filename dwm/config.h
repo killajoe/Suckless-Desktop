@@ -65,6 +65,7 @@ static const Rule rules[] = {
 	/* class            role                          instance     title   tags mask  switchtag  iscentered   isfloating   monitor */
 	{ "qutebrowser",    NULL,                         NULL,        NULL,   1,	      1,         0,           0,            1 },
 	{ "firefox",        NULL,                         NULL,        NULL,   1,	      1,         0,           0,            1 },
+	{ "Surf",           NULL,                         NULL,        NULL,   1,	      1,         0,           0,            1 },
 	{ "ncmpcpp",   		NULL,  				  		  NULL,   	   NULL,   1 << 1,    1,         0,			  0,		    1 },
 	{ "st",	            NULL,                         NULL,        NULL,   1 << 1,    1,         0,           0,            1 },
 	{ "Transmission-gtk",NULL,                        NULL,        NULL,   1 << 2,    1,         0,           0,            1 },
