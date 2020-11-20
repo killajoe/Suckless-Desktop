@@ -9,14 +9,17 @@ super + p
 super + shift + Return
 	st
 
-# screenshot and selection capture
+# Screenshot with Selection
 {_,super + }@Print
 	scrot {_,-s}
 
-1# reload sxhkd
+# Screenshot
+Print
+	scrot -cd 5 '%Y-%m-%d_%H-%M-%S.png' -e 'mv $f ~/Screenshots'
+
+# reload sxhkd
 super + shift + x
 	pkill -USR1 -x sxhkd
-
 
 # launcher
 super + space
@@ -47,7 +50,7 @@ super + e
 	subl3
 
 # NCMPCPP
-super + m
+super + shift + m
 	st ncmpcpp
 
 # screenshot and selection capture
@@ -62,13 +65,8 @@ XF86AudioRaiseVolume
 XF86AudioLowerVolume
     /usr/bin/volume down
 
-# Play MPD
-@XF86AudioPlay
-	mpc -q toggle
-
-# Stop MPD
-@XF86AudioStop
-	mpc stop
+XF86Audio{Play,Stop,Prev,Next}
+    mpc {toggle,stop,prev,next}
 
 # Logout
 super + x
@@ -77,10 +75,6 @@ super + x
 # Clipboard
 super + shift + p
 	clipmenu
-
-# Screenshot
-Print
-	/usr/bin/scr
 
 ###########################
 
@@ -136,7 +130,7 @@ super + {_,shift + ,ctrl + }{comma,period,backslash}
 	dkcmd mon {view,send,follow} {prev,next,last}
 
 # change active workspace layout
-super + {t,m,g,s,w,f}
+super + ctrl + {t,m,g,s,w,f}
 	dkcmd set layout {tile,mono,grid,spiral,dwindle,none}
 
 # change number of windows in master or first stack
