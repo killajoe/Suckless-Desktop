@@ -99,19 +99,18 @@ static const Layout layouts[] = {
 	/* symbol	arrange function */
 	{ "󰕴",	dwindle }, /* first entry is default */
 	{ "󰙀",	tile },
-	{ "󰋁", grid },
-	{ "󱒅", centeredmaster },
+	{ "󰕰", grid },
+	{ "󰕫", centeredmaster },
 	{ "󰕬", centeredfloatingmaster },
-	{ "[]=",	monocle },
-	{ "⧉⟧⧠",	NULL },    /* no layout function means floating behavior */
-	{ "⚎⚎⚎",	bstack },
-	{ "☰☰☰",	bstackhoriz },
-	{ ":::",	gaplessgrid },
-	{ "---",	horizgrid },
-	{ "###",	nrowgrid },
-	{ "⟦@⟧",	spiral },
-	{ "[M]",	monocle },
-	{ "D[]",	deck },
+	{ "󰕯",		NULL },    /* no layout function means floating behavior */
+	{ "󰾍",		bstack },
+	{ "󱇚",		bstackhoriz },
+	{ "󱒈",		gaplessgrid },
+	{ "󰕭",	horizgrid },
+	{ "󱒇",	nrowgrid },
+	{ "󰡃",		spiral },
+	{ "󰃚",		monocle },
+	{ "󱒉",		deck },
 	{ NULL,		NULL },
 };
 
