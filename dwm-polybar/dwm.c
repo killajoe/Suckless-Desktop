@@ -125,6 +125,7 @@ struct Client {
 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
 	int bw, oldbw;
 	unsigned int tags;
+	unsigned int switchtotag;
 	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen, issticky, isterminal, noswallow;
 	pid_t pid;
 	Client *next;
@@ -182,6 +183,7 @@ typedef struct {
 	const char *instance;
 	const char *title;
 	unsigned int tags;
+	unsigned int switchtotag;
 	int isfloating;
 	int isterminal;
 	int noswallow;
@@ -204,12 +206,15 @@ static void configure(Client *c);
 static void configurenotify(XEvent *e);
 static void configurerequest(XEvent *e);
 static Monitor *createmon(void);
+static void cyclelayout(const Arg *arg);
 static void destroynotify(XEvent *e);
 static void detach(Client *c);
 static void detachstack(Client *c);
 static Monitor *dirtomon(int dir);
 static void drawbar(Monitor *m);
 static void drawbars(void);
+static void enqueue(Client *c);
+static void enqueuestack(Client *c);
 static void enternotify(XEvent *e);
 static void expose(XEvent *e);
 static void focus(Client *c);
@@ -245,6 +250,7 @@ static void resize(Client *c, int x, int y, int w, int h, int interact);
 static void resizeclient(Client *c, int x, int y, int w, int h);
 static void resizemouse(const Arg *arg);
 static void restack(Monitor *m);
+static void rotatestack(const Arg *arg);
 static void run(void);
 static void scan(void);
 static void scantray(void);
@@ -449,6 +455,11 @@ applyrules(Client *c)
 			for (m = mons; m && m->num != r->monitor; m = m->next);
 			if (m)
 				c->mon = m;
+				if (r->switchtotag) {
+				Arg a = { .ui = r->tags };
+				c->switchtotag = selmon->tagset[selmon->seltags];
+				view(&a);
+			}
 		}
 	}
 	if (ch.res_class)
@@ -886,6 +897,23 @@ createmon(void)
 }
 
 void
+cyclelayout(const Arg *arg) {
+	Layout *l;
+	for(l = (Layout *)layouts; l != selmon->lt[selmon->sellt]; l++);
+	if(arg->i > 0) {
+		if(l->symbol && (l + 1)->symbol)
+			setlayout(&((Arg) { .v = (l + 1) }));
+		else
+			setlayout(&((Arg) { .v = layouts }));
+	} else {
+		if(l != layouts && (l - 1)->symbol)
+			setlayout(&((Arg) { .v = (l - 1) }));
+		else
+			setlayout(&((Arg) { .v = &layouts[LENGTH(layouts) - 2] }));
+	}
+}
+
+void
 destroynotify(XEvent *e)
 {
 	Client *c;
@@ -1000,6 +1028,28 @@ drawbars(void)
 
 	for (m = mons; m; m = m->next)
 		drawbar(m);
+}
+
+void
+enqueue(Client *c)
+{
+	Client *l;
+	for (l = c->mon->clients; l && l->next; l = l->next);
+	if (l) {
+		l->next = c;
+		c->next = NULL;
+	}
+}
+
+void
+enqueuestack(Client *c)
+{
+	Client *l;
+	for (l = c->mon->stack; l && l->snext; l = l->snext);
+	if (l) {
+		l->snext = c;
+		c->snext = NULL;
+	}
 }
 
 void
@@ -1661,6 +1711,13 @@ resizeclient(Client *c, int x, int y, int w, int h)
 	c->oldh = c->h; c->h = wc.height = h;
 	if (c->mon->lt[c->mon->sellt]->arrange == monocle) wc.border_width = 0;
 	else wc.border_width = c->bw;
+	if (((nexttiled(c->mon->clients) == c && !nexttiled(c->next))
+	    || &monocle == c->mon->lt[c->mon->sellt]->arrange)
+	    && !c->isfullscreen && !c->isfloating) {
+		c->w = wc.width += c->bw * 2;
+		c->h = wc.height += c->bw * 2;
+		wc.border_width = 0;
+	}
 	XConfigureWindow(dpy, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
 	configure(c);
 	XSync(dpy, False);
@@ -1750,6 +1807,38 @@ restack(Monitor *m)
 	while (XCheckMaskEvent(dpy, EnterWindowMask, &ev));
 	if (m == selmon && (m->tagset[m->seltags] & m->sel->tags) && selmon->lt[selmon->sellt] != &layouts[2])
 		warp(m->sel);
+}
+
+void
+rotatestack(const Arg *arg)
+{
+	Client *c = NULL, *f;
+
+	if (!selmon->sel)
+		return;
+	f = selmon->sel;
+	if (arg->i > 0) {
+		for (c = nexttiled(selmon->clients); c && nexttiled(c->next); c = nexttiled(c->next));
+		if (c){
+			detach(c);
+			attach(c);
+			detachstack(c);
+			attachstack(c);
+		}
+	} else {
+		if ((c = nexttiled(selmon->clients))){
+			detach(c);
+			enqueue(c);
+			detachstack(c);
+			enqueuestack(c);
+		}
+	}
+	if (c){
+		arrange(selmon);
+		//unfocus(f, 1);
+		focus(f);
+		restack(selmon);
+	}
 }
 
 void
@@ -2431,6 +2520,10 @@ unmanage(Client *c, int destroyed)
 		arrange(m);
 		focus(NULL);
 		updateclientlist();
+		if (c->switchtotag) {
+		Arg a = { .ui = c->switchtotag };
+		view(&a);
+	}
 	}
 }
 

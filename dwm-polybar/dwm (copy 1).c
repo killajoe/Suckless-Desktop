@@ -738,6 +738,7 @@ clientmessage(XEvent *e)
 {
 	XClientMessageEvent *cme = &e->xclient;
 	Client *c = wintoclient(cme->window);
+	unsigned int i;
 
 	if (!c)
 		return;
@@ -747,8 +748,14 @@ clientmessage(XEvent *e)
 			setfullscreen(c, (cme->data.l[0] == 1 /* _NET_WM_STATE_ADD    */
 				|| (cme->data.l[0] == 2 /* _NET_WM_STATE_TOGGLE */ && !c->isfullscreen)));
 	} else if (cme->message_type == netatom[NetActiveWindow]) {
-		if (c != selmon->sel && !c->isurgent)
-			seturgent(c, 1);
+		for (i = 0; i < LENGTH(tags) && !((1 << i) & c->tags); i++);
+		if (i < LENGTH(tags)) {
+			const Arg a = {.ui = 1 << i};
+			selmon = c->mon;
+			view(&a);
+			focus(c);
+			restack(selmon);
+		}
 	}
 }
 
@@ -1661,6 +1668,13 @@ resizeclient(Client *c, int x, int y, int w, int h)
 	c->oldh = c->h; c->h = wc.height = h;
 	if (c->mon->lt[c->mon->sellt]->arrange == monocle) wc.border_width = 0;
 	else wc.border_width = c->bw;
+	if (((nexttiled(c->mon->clients) == c && !nexttiled(c->next))
+	    || &monocle == c->mon->lt[c->mon->sellt]->arrange)
+	    && !c->isfullscreen && !c->isfloating) {
+		c->w = wc.width += c->bw * 2;
+		c->h = wc.height += c->bw * 2;
+		wc.border_width = 0;
+	}
 	XConfigureWindow(dpy, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
 	configure(c);
 	XSync(dpy, False);
