@@ -1,3 +1,0 @@
-#!/usr/bin/env sh
-
-free -m | awk 'NR==3 {printf "swap %.0f%%", $3*100/$2 }'
