@@ -42,6 +42,7 @@ static const Rule rules[] = {
 	 */
 	/* class        instance    title               tags mask   switchtotag  isfloating   isterminal  noswallow   monitor */
     { "firefox",      NULL,       NULL,               1,	       	1,			 0,           0,          0,          -1 },
+    { "Surf",		  NULL,       NULL,               1,	       	1,			 0,           0,          0,          -1 },
     { "st",		      NULL,       NULL,               1 << 1,      	1,			 0,           0,          0,          -1 },
     { "ncmpcpp",   	  NULL,       NULL,               1 << 1,     	1,			 0,           0,          0,          -1 },
     { "Transmission-gtk", NULL,   NULL,               1 << 2,       1,			 0,           0,          0,          -1 },
@@ -88,6 +89,7 @@ static const char *termcmd[]  = { "st", NULL };
 static const char scratchpadname[] = "scratchpad";
 static const char *scratchpadcmd[] = { "st", "-t", scratchpadname, "-g", "120x34", NULL };
 static const char *browsercmd[] = { "firefox", NULL };
+static const char *altbrowsercmd[] = { "surf", NULL };
 static const char *exitcmd[] = { "dmenu_logout", NULL };
 static const char *editcmd[] = { "subl3", NULL };
 static const char *filecmd[] = { "thunar", NULL };
@@ -121,7 +123,7 @@ static Key keys[] = {
 	{ MODKEY,             		    XK_q,      killclient,     {0} },
 	{ MODKEY|ShiftMask,             XK_t,      setlayout,      {.v = &layouts[0]} },
 //	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[1]} },
-	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[2]} },
+	{ MODKEY|ControlMask,           XK_f,      setlayout,      {.v = &layouts[2]} },
 	{ MODKEY,                       XK_g,      setlayout,      {.v = &layouts[3]} },
 	{ MODKEY,                       XK_r,      setlayout,      {.v = &layouts[3]} },
 	{ MODKEY|ShiftMask,             XK_r,      setlayout,      {.v = &layouts[4]} },
@@ -159,6 +161,7 @@ static Key keys[] = {
 	{ 0, XF86XK_AudioRewind,		spawn,					   SHCMD("mpc seek -10") },
 	{ 0, XF86XK_AudioForward,		spawn,					   SHCMD("mpc seek +10") },
 	{ MODKEY,						XK_w,		spawn,		   {.v = browsercmd } },
+	{ MODKEY|ShiftMask,		    	XK_w,		spawn,		   {.v = altbrowsercmd } },
 	{ MODKEY,						XK_x,		spawn,		   {.v = exitcmd } },
 	{ MODKEY,						XK_e,		spawn,		   {.v = editcmd } },
 	{ MODKEY|ShiftMask,				XK_p,		spawn,		   SHCMD("clipmenu") },
