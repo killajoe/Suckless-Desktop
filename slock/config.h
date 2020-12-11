@@ -5,7 +5,7 @@ static const char *group = "nobody"; // use "nobody" for arch
 static const char *colorname[NUMCOLS] = {
 	[INIT] =   "#141414",     /* after initialization */
 	[INPUT] =  "#7e9cb9",   /* during input */
-	[FAILED] = "#ee5555",   /* wrong password */
+	[FAILED] = "#f76767",   /* wrong password */
 	#if CAPSCOLOR_PATCH
 	[CAPS] =   "#ee5555",       /* CapsLock on */
 	#endif // CAPSCOLOR_PATCH

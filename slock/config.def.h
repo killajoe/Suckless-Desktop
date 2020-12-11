@@ -3,9 +3,9 @@ static const char *user  = "nobody";
 static const char *group = "nobody"; // use "nobody" for arch
 
 static const char *colorname[NUMCOLS] = {
-	[INIT] =   "black",     /* after initialization */
-	[INPUT] =  "#005577",   /* during input */
-	[FAILED] = "#CC3333",   /* wrong password */
+	[INIT] =   "#141414",     /* after initialization */
+	[INPUT] =  "#7e9cb9",   /* during input */
+	[FAILED] = "#f76767",   /* wrong password */
 	#if CAPSCOLOR_PATCH
 	[CAPS] =   "red",       /* CapsLock on */
 	#endif // CAPSCOLOR_PATCH

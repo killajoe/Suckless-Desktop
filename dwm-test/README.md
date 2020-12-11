@@ -1,9 +1,14 @@
 Forked from https://github.com/bakkeby/dwm-vanitygaps.  Thank you for your original work.
 
+Patches added to this already in depth build of dwm:
+   -  [Scratchpad](https://dwm.suckless.org/patches/scratchpad/)
+      - The scratchpad patch allows you to spawn or restore a floating terminal window. It is usually useful to have one to do some short typing.
+
+---
+
 
 My dwm 6.2 build with custom patches. Refer to [https://dwm.suckless.org/](https://dwm.suckless.org/) for details on the dwm window manager, how to install it and how it works.
 
-NB! This is more or less obsolete now. I'd recommend checking out [dwm-flexipatch](https://github.com/bakkeby/dwm-flexipatch) instead.
 
 ---
 

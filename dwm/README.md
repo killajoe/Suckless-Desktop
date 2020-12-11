@@ -1,9 +1,17 @@
 Forked from https://github.com/bakkeby/dwm-vanitygaps.  Thank you for your original work.
 
+Patches added to this already in depth build of dwm:
+   -  [scratchpad](https://dwm.suckless.org/patches/scratchpad/)
+      - The scratchpad patch allows you to spawn or restore a floating terminal window. It is usually useful to have one to do some short typing.
+
+   - [clientindicators](https://dwm.suckless.org/patches/clientindicators/)
+      - This patch draws a dot indicator overlayed on each tag icon for each client. The selected client is drawn as a larger horizontal line. This may help the user get a quick overview of how many open clients they have on which tags.
+
+---
+
 
 My dwm 6.2 build with custom patches. Refer to [https://dwm.suckless.org/](https://dwm.suckless.org/) for details on the dwm window manager, how to install it and how it works.
 
-NB! This is more or less obsolete now. I'd recommend checking out [dwm-flexipatch](https://github.com/bakkeby/dwm-flexipatch) instead.
 
 ---
 

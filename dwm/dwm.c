@@ -269,6 +269,7 @@ static void tagallmon(const Arg *arg);
 static void tagswapmon(const Arg *arg);
 static void togglebar(const Arg *arg);
 static void togglefloating(const Arg *arg);
+static void togglescratch(const Arg *arg);
 static void togglefullscreen(const Arg *arg);
 static void toggletag(const Arg *arg);
 static void toggleview(const Arg *arg);
@@ -355,6 +356,8 @@ struct Pertag {
 	Bool showbars[LENGTH(tags) + 1]; /* display bar for the current tag */
 	Client *prevzooms[LENGTH(tags) + 1]; /* store zoom information */
 };
+
+static unsigned int scratchtag = 1 << LENGTH(tags);
 
 /* compile-time check if all tags fit into an unsigned int bit array. */
 struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
@@ -976,6 +979,7 @@ dirtomon(int dir)
 void
 drawbar(Monitor *m)
 {
+	int indn;
 	int x, w, sw = 0, stw = 0, tw, mw, ew = 0;
 	int boxs = drw->fonts->h / 9;
 	int boxw = drw->fonts->h / 6 + 2;
@@ -1001,13 +1005,18 @@ drawbar(Monitor *m)
 	}
 	x = 0;
 	for (i = 0; i < LENGTH(tags); i++) {
+		indn = 0;
 		w = TEXTW(tags[i]);
 		drw_setscheme(drw, scheme[m->tagset[m->seltags] & 1 << i ? SchemeSel : SchemeNorm]);
-		drw_text(drw, x, 0, w, bh, lrpad / 2, tags[i], urg & 1 << i);
-		if (occ & 1 << i)
-			drw_rect(drw, x + boxs, boxs, boxw, boxw,
-				m == selmon && selmon->sel && selmon->sel->tags & 1 << i,
-				urg & 1 << i);
+		drw_text(drw, x, 0, w, bh, lrpad / 2, tags[i], urg & 1 << i);	
+		
+		for (c = m->clients; c; c = c->next) {
+			if (c->tags & (1 << i)) {
+				drw_rect(drw, x, 1 + (indn * 2), selmon->sel == c ? 6 : 1, 1, 1, urg & 1 << i);
+				indn++;
+			}
+		}
+
 		x += w;
 	}
 	w = blw = TEXTW(m->ltsymbol);
@@ -1435,6 +1444,14 @@ manage(Window w, XWindowAttributes *wa)
 	c->y = MAX(c->y, ((c->mon->by == c->mon->my) && (c->x + (c->w / 2) >= c->mon->wx)
 		&& (c->x + (c->w / 2) < c->mon->wx + c->mon->ww)) ? bh : c->mon->my);
 	c->bw = borderpx;
+
+	selmon->tagset[selmon->seltags] &= ~scratchtag;
+	if (!strcmp(c->name, scratchpadname)) {
+		c->mon->tagset[c->mon->seltags] |= c->tags = scratchtag;
+		c->isfloating = True;
+		c->x = c->mon->wx + (c->mon->ww / 2 - WIDTH(c) / 2);
+		c->y = c->mon->wy + (c->mon->wh / 2 - HEIGHT(c) / 2);
+	}
 
 	wc.border_width = c->bw;
 	XConfigureWindow(dpy, w, CWBorderWidth, &wc);
@@ -2336,6 +2353,7 @@ spawn(const Arg *arg)
 {
 	if (arg->v == dmenucmd)
 		dmenumon[0] = '0' + selmon->num;
+	selmon->tagset[selmon->seltags] &= ~scratchtag;
 	if (fork() == 0) {
 		if (dpy)
 			close(ConnectionNumber(dpy));
@@ -2535,6 +2553,28 @@ togglefullscreen(const Arg *arg) {
         return;
 
     setfullscreen(selmon->sel, !selmon->sel->isfullscreen);
+}
+
+void
+togglescratch(const Arg *arg)
+{
+	Client *c;
+	unsigned int found = 0;
+
+	for (c = selmon->clients; c && !(found = c->tags & scratchtag); c = c->next);
+	if (found) {
+		unsigned int newtagset = selmon->tagset[selmon->seltags] ^ scratchtag;
+		if (newtagset) {
+			selmon->tagset[selmon->seltags] = newtagset;
+			focus(NULL);
+			arrange(selmon);
+		}
+		if (ISVISIBLE(c)) {
+			focus(c);
+			restack(selmon);
+		}
+	} else
+		spawn(arg);
 }
 
 void

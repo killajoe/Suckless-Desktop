@@ -22,7 +22,7 @@ static const int savefloats              = 1;   /* 0 means default behaviour, 1 
 static const int losefullscreen          = 1;   /* 0 means default behaviour, 1 = losefullscreen patch */
 static const int nrg_force_vsplit        = 1;   /* nrowgrid layout, 1 means force 2 clients to always split vertically */
 static const unsigned int systraypinning = 0;   /* 0: sloppy systray follows selected monitor, >0: pin systray to monitor X */
-static const unsigned int systrayspacing = 4;   /* systray spacing */
+static const unsigned int systrayspacing = 0;   /* systray spacing */
 static const int systraypinningfailfirst = 1;   /* 1: if pinning fails, display systray on the first monitor, False: display systray on the last monitor*/
 static const int showsystray             = 1;   /* 0 means no systray */
 static const char *fonts[]         		 = {"Inter:style=Regular:size=5", "Font Awesome 5 Pro:style=Solid:pixelsize=12:antialias=true", "Font Awesome 5 Brands:style=Solid:pixelsize=12:antialias=true", "Material Design Icons:Regular:pixelsize=22:antialias=true"};
@@ -53,8 +53,6 @@ static const unsigned int alphas[][3] = {
 
 /* tagging */
 static const char *tags[] = { "", "", "", "", "", "", "", "", "", "" };
-/*static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };*/
-/*static const char *tags[] = { "", "", "", "", "", "", "", "", "" };*/
 
 static const Rule rules[] = {
 	/* xprop(1):
@@ -102,16 +100,16 @@ static const Layout layouts[] = {
 	{ "󰕰", grid },
 	{ "󰕫", centeredmaster },
 	{ "󰕬", centeredfloatingmaster },
-	{ "󰕯",		NULL },    /* no layout function means floating behavior */
-	{ "󰾍",		bstack },
-	{ "󱇚",		bstackhoriz },
-	{ "󱒈",		gaplessgrid },
+	{ "󰕯",	NULL },    /* no layout function means floating behavior */
+	{ "󰾍",	bstack },
+	{ "󱇚",	bstackhoriz },
+	{ "󱒈",	gaplessgrid },
 	{ "󰕭",	horizgrid },
 	{ "󱒇",	nrowgrid },
-	{ "󰡃",		spiral },
-	{ "󰃚",		monocle },
-	{ "󱒉",		deck },
-	{ NULL,		NULL },
+	{ "󰡃",	spiral },
+	{ "󰃚",	monocle },
+	{ "󱒉",	deck },
+	{ NULL,	NULL },
 };
 
 /* key definitions */
@@ -130,14 +128,16 @@ static const char *dmenucmd[] = { "dmenu_run_history", NULL };
 static const char *scrotcmd[] = {"/usr/bin/scr", NULL};
 static const char *termcmd[]  = { "st", NULL };
 static const char *browsercmd[] = { "firefox", NULL };
-static const char *altbrowsercmd[] = { "qutebrowser", NULL };
-static const char *exitcmd[] = { "dmenu_logout", NULL };
+static const char *altbrowsercmd[] = { "surf", NULL };
+static const char *exitcmd[] = { "/usr/bin/stop.sh", NULL };
 static const char *munext[]  = { "/usr/bin/mpc", "next", NULL };
 static const char *muprev[]  = { "/usr/bin/mpc", "prev", NULL };
 static const char *mupause[]  = { "/usr/bin/mpc", "toggle", NULL };
 static const char *filecmd[] = { "thunar", NULL };
 static const char *editcmd[] = { "subl3", NULL };
 static const char *vimcmd[] = { "gvim", NULL };
+static const char scratchpadname[] = "scratchpad";
+static const char *scratchpadcmd[] = { "st", "-t", scratchpadname, "-g", "120x34", NULL };
 
 #include <X11/XF86keysym.h>
 static Key keys[] = {
@@ -145,7 +145,8 @@ static Key keys[] = {
 	{ MODKEY,                       XK_d,      spawn,             {.v = dmenucmd } },
 	{ MODKEY,						XK_space,  spawn,             {.v = dmenucmd } },
 	{ MODKEY,                       XK_t, 	   spawn,             {.v = termcmd } },
-	{ MODKEY,                       XK_b,      togglebar,         {0} },
+	{ MODKEY,                       XK_grave,  togglescratch,  	  {.v = scratchpadcmd } },
+	{ MODKEY|ShiftMask,             XK_b,      togglebar,         {0} },
 	{ MODKEY,                       XK_j,      focusstack,        {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,        {.i = -1 } },
 	{ MODKEY|Mod1Mask,              XK_j,      rotatestack,       {.i = +1 } },
@@ -153,7 +154,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_i,      incnmaster,        {.i = +1 } },
 	{ MODKEY,                       XK_u,      incnmaster,        {.i = -1 } },
 	{ MODKEY,                       XK_h,      setmfact,          {.f = -0.05} },
-	{ MODKEY,                       XK_l,      setmfact,          {.f = +0.05} },
+	{ MODKEY|ControlMask,           XK_l,      setmfact,          {.f = +0.05} },
 	{ MODKEY|ShiftMask,             XK_h,      setcfact,          {.f = +0.25} },
 	{ MODKEY|ShiftMask,             XK_l,      setcfact,          {.f = -0.25} },
 	{ MODKEY|ShiftMask,             XK_o,      setcfact,          {.f =  0.00} },
@@ -253,10 +254,10 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask, 			XK_e,		spawn,			{.v = vimcmd } },
 	/*{ MODKEY|ShiftMask,				XK_p,		spawn,			SHCMD("greenclip print | sed '/^$/d' | dmenu -i -l 10 -p clipboard | xargs -r -d'\n' -I '{}' greenclip print '{}'") },*/
 	{ MODKEY|ShiftMask,				XK_p,		spawn,			SHCMD("clipmenu") },
+	{ MODKEY,						XK_b,		spawn,		   SHCMD("buku-dmenu") },
 	{ MODKEY,						XK_m,		spawn,			SHCMD("st -c ncmpcpp -e ncmpcpp") },
 	{ MODKEY,						XK_f,		spawn,			{.v = filecmd } },
-	{ MODKEY|ShiftMask,				XK_m,		spawn,			SHCMD ("flatpak run com.mojang.Minecraft") },
-	{ MODKEY|ShiftMask,				XK_w,		spawn,			SHCMD ("vivaldi-stable --force-device-scale-factor=1.5") },
+	{ MODKEY,						XK_l,       spawn,		    SHCMD("slock") },
 };
 
 /* button definitions */

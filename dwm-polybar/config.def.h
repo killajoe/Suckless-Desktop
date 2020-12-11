@@ -90,7 +90,7 @@ static const char scratchpadname[] = "scratchpad";
 static const char *scratchpadcmd[] = { "st", "-t", scratchpadname, "-g", "120x34", NULL };
 static const char *browsercmd[] = { "firefox", NULL };
 static const char *altbrowsercmd[] = { "surf", NULL };
-static const char *exitcmd[] = { "dmenu_logout", NULL };
+static const char *exitcmd[] = { "/usr/bin/stop.sh", NULL };
 static const char *editcmd[] = { "subl3", NULL };
 static const char *filecmd[] = { "thunar", NULL };
 static const char *munext[]  = { "/usr/bin/mpc", "next", NULL };
@@ -106,7 +106,7 @@ static Key keys[] = {
 	{ MODKEY,						XK_space,  spawn,          {.v = dmenucmd } },
 	{ MODKEY,                       XK_t, 	   spawn,          {.v = termcmd } },
 	{ MODKEY,                       XK_grave,  togglescratch,  {.v = scratchpadcmd } },
-	{ MODKEY,                       XK_b,      togglebar,      {0} },
+	{ MODKEY|ControlMask|ShiftMask, XK_b,      togglebar,      {0} },
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
 	{ MODKEY,                       XK_i,      incnmaster,     {.i = +1 } },
@@ -150,6 +150,7 @@ static Key keys[] = {
 	TAGKEYS(                        XK_8,                      7)
 	TAGKEYS(                        XK_9,                      8)
     TAGKEYS(                        XK_0,                      9)
+    {MODKEY,						XK_l,       spawn,		   SHCMD("slock") },
     { 0, XF86XK_AudioMute,			spawn,					   SHCMD("amixer sset Master toggle") },
 	{ 0, XF86XK_AudioRaiseVolume,	spawn,					   SHCMD("/usr/bin/volume up") },
 	{ 0, XF86XK_AudioLowerVolume,	spawn,					   SHCMD("/usr/bin/volume down") },
@@ -164,6 +165,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,		    	XK_w,		spawn,		   {.v = altbrowsercmd } },
 	{ MODKEY,						XK_x,		spawn,		   {.v = exitcmd } },
 	{ MODKEY,						XK_e,		spawn,		   {.v = editcmd } },
+	{ MODKEY,						XK_b,		spawn,		   SHCMD("buku-dmenu") },
 	{ MODKEY|ShiftMask,				XK_p,		spawn,		   SHCMD("clipmenu") },
 	{ MODKEY,						XK_m,		spawn,		   SHCMD("st -c ncmpcpp -e ncmpcpp") },
 	{ MODKEY,						XK_f,		spawn,		   {.v = filecmd } },
