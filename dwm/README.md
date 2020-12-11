@@ -1,4 +1,4 @@
-Forked from https://github.com/bakkeby/dwm-vanitygaps.  Thank you for your original work.
+Forked from [bakkeby](https://github.com/bakkeby/dwm-vanitygaps).  Thank you for your original work.
 
 Patches added to this already in depth build of dwm:
    -  [scratchpad](https://dwm.suckless.org/patches/scratchpad/)
