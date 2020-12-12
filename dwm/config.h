@@ -254,7 +254,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask, 			XK_e,		spawn,			{.v = vimcmd } },
 	/*{ MODKEY|ShiftMask,				XK_p,		spawn,			SHCMD("greenclip print | sed '/^$/d' | dmenu -i -l 10 -p clipboard | xargs -r -d'\n' -I '{}' greenclip print '{}'") },*/
 	{ MODKEY|ShiftMask,				XK_p,		spawn,			SHCMD("clipmenu") },
-	{ MODKEY,						XK_b,		spawn,		   SHCMD("buku-dmenu") },
+	{ MODKEY,						XK_b,		spawn,		    SHCMD("buku-dmenu") },
 	{ MODKEY,						XK_m,		spawn,			SHCMD("st -c ncmpcpp -e ncmpcpp") },
 	{ MODKEY,						XK_f,		spawn,			{.v = filecmd } },
 	{ MODKEY,						XK_l,       spawn,		    SHCMD("slock") },
