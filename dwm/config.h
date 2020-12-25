@@ -128,7 +128,7 @@ static const char *dmenucmd[] = { "dmenu_run_history", NULL };
 static const char *scrotcmd[] = {"/usr/bin/scr", NULL};
 static const char *termcmd[]  = { "st", NULL };
 static const char *browsercmd[] = { "firefox", NULL };
-static const char *altbrowsercmd[] = { "surf", NULL };
+/*static const char *altbrowsercmd[] = { "qutebrowser", NULL };*/
 static const char *exitcmd[] = { "/usr/bin/stop.sh", NULL };
 static const char *munext[]  = { "/usr/bin/mpc", "next", NULL };
 static const char *muprev[]  = { "/usr/bin/mpc", "prev", NULL };
@@ -248,7 +248,7 @@ static Key keys[] = {
 	{ 0, XF86XK_AudioRewind,		spawn,						SHCMD("mpc seek -10") },
 	{ 0, XF86XK_AudioForward,		spawn,						SHCMD("mpc seek +10") },
 	{ MODKEY,						XK_w,		spawn,			{.v = browsercmd } },
-	{ MODKEY|ShiftMask,				XK_w,		spawn,			{.v = altbrowsercmd } },
+	{ MODKEY|ShiftMask,				XK_w,		spawn,			SHCMD("QT_SCALE_FACTOR=0.5 qutebrowser") },
 	{ MODKEY,						XK_x,		spawn,			{.v = exitcmd } },
 	{ MODKEY,						XK_e,		spawn,			{.v = editcmd } },
 	{ MODKEY|ShiftMask, 			XK_e,		spawn,			{.v = vimcmd } },
@@ -256,10 +256,11 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,				XK_p,		spawn,			SHCMD("clipmenu") },
 	{ MODKEY,						XK_b,		spawn,		    SHCMD("buku-dmenu") },
 	{ MODKEY,						XK_m,		spawn,			SHCMD("st -c ncmpcpp -e ncmpcpp") },
+	{ MODKEY|ShiftMask,				XK_m,		spawn,			SHCMD("QT_SCALE_FACTOR=0.5 audacious") },
 	{ MODKEY,						XK_f,		spawn,			{.v = filecmd } },
 	{ MODKEY,						XK_l,       spawn,		    SHCMD("slock") },
 };
-
+ 
 /* button definitions */
 /* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
 static Button buttons[] = {

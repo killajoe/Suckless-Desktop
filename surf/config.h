@@ -11,7 +11,7 @@ static char *cachedir       = "~/.surf/cache/";
 static char *cookiefile     = "~/.surf/cookies.txt";
 
 #ifndef HOMEPAGE
-#define HOMEPAGE "https://start.duckduckgo.com/"
+#define HOMEPAGE "https://duckduckgo.com/"
 #endif
 
 static char *searchengine = "https://duckduckgo.com/?q=";
