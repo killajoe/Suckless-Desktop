@@ -1,9 +1,7 @@
 /* See LICENSE file for copyright and license details. */
 #include <ctype.h>
 #include <locale.h>
-// >>>>>>>>>>>>>>>>>>>> fuzzymatch
-// ==================== fuzzymatch
-// <<<<<<<<<<<<<<<<<<<< fuzzymatch
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,12 +16,6 @@
 #include <X11/extensions/Xinerama.h>
 #endif
 #include <X11/Xft/Xft.h>
-// >>>>>>>>>>>>>>>>>>>> json
-// ==================== json
-// <<<<<<<<<<<<<<<<<<<< json
-// >>>>>>>>>>>>>>>>>>>> xresources
-// ==================== xresources
-// <<<<<<<<<<<<<<<<<<<< xresources
 
 #include "drw.h"
 #include "util.h"
@@ -33,97 +25,31 @@
                              * MAX(0, MIN((y)+(h),(r).y_org+(r).height) - MAX((y),(r).y_org)))
 #define LENGTH(X)             (sizeof X / sizeof X[0])
 #define TEXTW(X)              (drw_fontset_getwidth(drw, (X)) + lrpad)
-// >>>>>>>>>>>>>>>>>>>> numbers
-// ==================== numbers
-// <<<<<<<<<<<<<<<<<<<< numbers
+#define NUMBERSMAXDIGITS      100
+#define NUMBERSBUFSIZE        (NUMBERSMAXDIGITS * 2) + 1
 
 /* enums */
-enum {
-  // >>>>>>>>>>>>>>>>>>>> fuzzyhighlight
-  // ==================== fuzzyhighlight
-  // <<<<<<<<<<<<<<<<<<<< fuzzyhighlight
-  // >>>>>>>>>>>>>>>>>>>> more-color
-  // ==================== more-color
-  // <<<<<<<<<<<<<<<<<<<< more-color
-  // >>>>>>>>>>>>>>>>>>>> high-priority
-  // ==================== high-priority
-  // <<<<<<<<<<<<<<<<<<<< high-priority
-  // >>>>>>>>>>>>>>>>>>>> highlight
-  SchemeSelHighlight,
-  SchemeNormHighlight,
-  // <<<<<<<<<<<<<<<<<<<< highlight
-  SchemeNorm,
-  SchemeSel,
-  SchemeOut,
-  SchemeLast
-}; /* color schemes */
+enum { SchemeNorm, SchemeSel, SchemeNormHighlight, SchemeSelHighlight,
+       SchemeOut, SchemeLast }; /* color schemes */
 
 struct item {
 	char *text;
 	struct item *left, *right;
-  int out;
-  // >>>>>>>>>>>>>>>>>>>> multi-selection
-  // ==================== multi-selection
-  // <<<<<<<<<<<<<<<<<<<< multi-selection
-  // >>>>>>>>>>>>>>>>>>>> fuzzymatch
-  // ==================== fuzzymatch
-  // <<<<<<<<<<<<<<<<<<<< fuzzymatch
-  // >>>>>>>>>>>>>>>>>>>> json
-  // ==================== json
-  // <<<<<<<<<<<<<<<<<<<< json
-  // >>>>>>>>>>>>>>>>>>>> high-priority
-  // ==================== high-priority
-  // <<<<<<<<<<<<<<<<<<<< high-priority
+	int out;
+	double distance;
 };
 
+static char numbers[NUMBERSBUFSIZE] = "";
 static char text[BUFSIZ] = "";
 static char *embed;
 static int bh, mw, mh;
-// >>>>>>>>>>>>>>>>>>>> password
-// ==================== password
 static int inputw = 0, promptw;
-// <<<<<<<<<<<<<<<<<<<< password
 static int lrpad; /* sum of left and right padding */
 static size_t cursor;
 static struct item *items = NULL;
 static struct item *matches, *matchend;
 static struct item *prev, *curr, *next, *sel;
 static int mon = -1, screen;
-// >>>>>>>>>>>>>>>>>>>> xyw
-static int dmx = 0; /* put dmenu at this x offset */
-static int dmy = 0; /* put dmenu at this y offset (measured from the bottom if topbar is 0) */
-static unsigned int dmw = 0; /* make dmenu this wide */
-// <<<<<<<<<<<<<<<<<<<< xyw
-// >>>>>>>>>>>>>>>>>>>> numbers
-// ==================== numbers
-// <<<<<<<<<<<<<<<<<<<< numbers
-// >>>>>>>>>>>>>>>>>>>> pipeout
-// ==================== pipeout
-// <<<<<<<<<<<<<<<<<<<< pipeout
-// >>>>>>>>>>>>>>>>>>>> json
-// ==================== json
-// <<<<<<<<<<<<<<<<<<<< json
-// >>>>>>>>>>>>>>>>>>>> multi-selection
-// ==================== multi-selection
-// <<<<<<<<<<<<<<<<<<<< multi-selection
-// >>>>>>>>>>>>>>>>>>>> managed
-// ==================== managed
-// <<<<<<<<<<<<<<<<<<<< managed
-// >>>>>>>>>>>>>>>>>>>> reject-no-match
-static int reject_no_match = 0;
-// <<<<<<<<<<<<<<<<<<<< reject-no-match
-// >>>>>>>>>>>>>>>>>>>> navhistory
-// ==================== navhistory
-// <<<<<<<<<<<<<<<<<<<< navhistory
-// >>>>>>>>>>>>>>>>>>>> print-input-text
-// ==================== print-input-text
-// <<<<<<<<<<<<<<<<<<<< print-input-text
-// >>>>>>>>>>>>>>>>>>>> xresources
-// ==================== xresources
-// <<<<<<<<<<<<<<<<<<<< xresources
-// >>>>>>>>>>>>>>>>>>>> high-priority
-// ==================== high-priority
-// <<<<<<<<<<<<<<<<<<<< high-priority
 
 static Atom clip, utf8;
 static Display *dpy;
@@ -133,25 +59,11 @@ static XIC xic;
 static Drw *drw;
 static Clr *scheme[SchemeLast];
 
-#include "config.def.h"
+#include "config.h"
 
-// >>>>>>>>>>>>>>>>>>>> case-insensitive
-// ==================== case-insensitive
-static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
-static char *(*fstrstr)(const char *, const char *) = strstr;
-// <<<<<<<<<<<<<<<<<<<< case-insensitive
-
-// >>>>>>>>>>>>>>>>>>>> json
-// ==================== json
-// <<<<<<<<<<<<<<<<<<<< json
-
-// >>>>>>>>>>>>>>>>>>>> multi-selection
-// ==================== multi-selection
-// <<<<<<<<<<<<<<<<<<<< multi-selection
-
-// >>>>>>>>>>>>>>>>>>>> high-priority
-// ==================== high-priority
-// <<<<<<<<<<<<<<<<<<<< high-priority
+static char * cistrstr(const char *s, const char *sub);
+static int (*fstrncmp)(const char *, const char *, size_t) = strncasecmp;
+static char *(*fstrstr)(const char *, const char *) = cistrstr;
 
 static void
 appenditem(struct item *item, struct item **list, struct item **last)
@@ -172,15 +84,9 @@ calcoffsets(void)
 	int i, n;
 
 	if (lines > 0)
-    // >>>>>>>>>>>>>>>>>>>> grid
-    // ==================== grid
-    n = lines * bh;
-    // <<<<<<<<<<<<<<<<<<<< grid
+		n = lines * bh;
 	else
-    // >>>>>>>>>>>>>>>>>>>> symbols
-    // ==================== symbols
 		n = mw - (promptw + inputw + TEXTW("<") + TEXTW(">"));
-    // <<<<<<<<<<<<<<<<<<<< symbols
 	/* calculate which items will begin the next page and previous page */
 	for (i = 0, next = curr; next; next = next->right)
 		if ((i += (lines > 0) ? bh : MIN(TEXTW(next->text), n)) > n)
@@ -190,9 +96,14 @@ calcoffsets(void)
 			break;
 }
 
-// >>>>>>>>>>>>>>>>>>>> center
-// ==================== center
-// <<<<<<<<<<<<<<<<<<<< center
+static int
+max_textw(void)
+{
+	int len = 0;
+	for (struct item *item = items; item && item->text; item++)
+		len = MAX(TEXTW(item->text), len);
+	return len;
+}
 
 static void
 cleanup(void)
@@ -205,9 +116,6 @@ cleanup(void)
 	drw_free(drw);
 	XSync(dpy, False);
 	XCloseDisplay(dpy);
-  // >>>>>>>>>>>>>>>>>>>> multi-selection
-  // ==================== multi-selection
-  // <<<<<<<<<<<<<<<<<<<< multi-selection
 }
 
 static char *
@@ -221,97 +129,81 @@ cistrstr(const char *s, const char *sub)
 	return NULL;
 }
 
-// >>>>>>>>>>>>>>>>>>>> fuzzyhighlight
-// ==================== fuzzyhighlight
-// <<<<<<<<<<<<<<<<<<<< fuzzyhighlight
-
-// >>>>>>>>>>>>>>>>>>>> highlight
 static void
 drawhighlights(struct item *item, int x, int y, int maxw)
 {
-  char restorechar, tokens[sizeof text], *highlight,  *token;
-  int indentx, highlightlen;
+	int i, indent;
+	char *highlight;
+	char c;
 
-  drw_setscheme(drw, scheme[item == sel ? SchemeSelHighlight : SchemeNormHighlight]);
-  strcpy(tokens, text);
-  for (token = strtok(tokens, " "); token; token = strtok(NULL, " ")) {
-    highlight = fstrstr(item->text, token);
-    while (highlight) {
-      // Move item str end, calc width for highlight indent, & restore
-      highlightlen = highlight - item->text;
-      restorechar = *highlight;
-      item->text[highlightlen] = '\0';
-      indentx = TEXTW(item->text);
-      item->text[highlightlen] = restorechar;
+	if (!(strlen(item->text) && strlen(text)))
+		return;
 
-      // Move highlight str end, draw highlight, & restore
-      restorechar = highlight[strlen(token)];
-      highlight[strlen(token)] = '\0';
-      if (indentx - (lrpad / 2) - 1 < maxw)
-        drw_text(
-          drw,
-          x + indentx - (lrpad / 2) - 1,
-          y,
-          MIN(maxw - indentx, TEXTW(highlight) - lrpad),
-          bh, 0, highlight, 0
-        );
-      highlight[strlen(token)] = restorechar;
+	drw_setscheme(drw, scheme[item == sel
+	                   ? SchemeSelHighlight
+	                   : SchemeNormHighlight]);
+	for (i = 0, highlight = item->text; *highlight && text[i];) {
+      if (!fstrncmp(&(*highlight), &text[i], 1)) {
+			/* get indentation */
+			c = *highlight;
+			*highlight = '\0';
+			indent = TEXTW(item->text);
+			*highlight = c;
 
-      if (strlen(highlight) - strlen(token) < strlen(token)) break;
-      highlight = fstrstr(highlight + strlen(token), token);
-    }
-  }
+			/* highlight character */
+			c = highlight[1];
+			highlight[1] = '\0';
+			drw_text(
+				drw,
+				x + indent - (lrpad / 2),
+				y,
+				MIN(maxw - indent, TEXTW(highlight) - lrpad),
+				bh, 0, highlight, 0
+			);
+			highlight[1] = c;
+			i++;
+		}
+		highlight++;
+	}
 }
-// <<<<<<<<<<<<<<<<<<<< highlight
 
 static int
 drawitem(struct item *item, int x, int y, int w)
 {
-  // >>>>>>>>>>>>>>>>>>>> fuzzyhighlight
-  // ==================== fuzzyhighlight
-  // <<<<<<<<<<<<<<<<<<<< fuzzyhighlight
+   int r;
 	if (item == sel)
 		drw_setscheme(drw, scheme[SchemeSel]);
-  // >>>>>>>>>>>>>>>>>>>> multi-selection
-  // ==================== multi-selection
-  else if (item->out)
-  // <<<<<<<<<<<<<<<<<<<< multi-selection
+	else if (item->out)
 		drw_setscheme(drw, scheme[SchemeOut]);
-  // >>>>>>>>>>>>>>>>>>>> more-color
-  // ==================== more-color
-  // <<<<<<<<<<<<<<<<<<<< more-color
-  // >>>>>>>>>>>>>>>>>>>> high-priority
-  // ==================== high-priority
-  // <<<<<<<<<<<<<<<<<<<< high-priority
 	else
 		drw_setscheme(drw, scheme[SchemeNorm]);
 
-  // >>>>>>>>>>>>>>>>>>>> fuzzyhighlight-highlight
-  int r = drw_text(drw, x, y, w, bh, lrpad / 2, item->text, 0);
-  drawhighlights(item, x, y, w);
-  return r;
-  // <<<<<<<<<<<<<<<<<<<< fuzzyhighlight-highlight
+	r = drw_text(drw, x, y, w, bh, lrpad / 2, item->text, 0);
+	drawhighlights(item, x, y, w);
+	return r;
 }
 
-// >>>>>>>>>>>>>>>>>>>> numbers
-// ==================== numbers
-// <<<<<<<<<<<<<<<<<<<< numbers
+static void
+recalculatenumbers()
+{
+	unsigned int numer = 0, denom = 0;
+	struct item *item;
+	if (matchend) {
+		numer++;
+		for (item = matchend; item && item->left; item = item->left)
+			numer++;
+	}
+	for (item = items; item && item->text; item++)
+		denom++;
+	snprintf(numbers, NUMBERSBUFSIZE, "%d/%d", numer, denom);
+}
 
 static void
 drawmenu(void)
 {
-  // >>>>>>>>>>>>>>>>>>>> scroll
-  // ==================== scroll
-  unsigned int curpos;
-  // <<<<<<<<<<<<<<<<<<<< scroll
+	unsigned int curpos;
 	struct item *item;
-	int x = 0, y = 0, w;
-  // >>>>>>>>>>>>>>>>>>>> password
-  // ==================== password
-  // <<<<<<<<<<<<<<<<<<<< password
-  // >>>>>>>>>>>>>>>>>>>> line-height
-  int fh = drw->fonts->h;
-  // <<<<<<<<<<<<<<<<<<<< line-height
+	int x = 0, y = 0, fh = drw->fonts->h, w;
 
 	drw_setscheme(drw, scheme[SchemeNorm]);
 	drw_rect(drw, 0, 0, mw, mh, 1, 1);
@@ -322,69 +214,39 @@ drawmenu(void)
 	}
 	/* draw input field */
 	w = (lines > 0 || !matches) ? mw - x : inputw;
-  // >>>>>>>>>>>>>>>>>>>> scroll
-  // ==================== scroll
-  drw_setscheme(drw, scheme[SchemeNorm]);
-  // <<<<<<<<<<<<<<<<<<<< scroll
-  // >>>>>>>>>>>>>>>>>>>> password-scroll
-  // ==================== password-scroll
-  drw_text(drw, x, 0, w, bh, lrpad / 2, text, 0);
-  // <<<<<<<<<<<<<<<<<<<< password-scroll
+	drw_setscheme(drw, scheme[SchemeNorm]);
+	drw_text(drw, x, 0, w, bh, lrpad / 2, text, 0);
 
-  // >>>>>>>>>>>>>>>>>>>> scroll-line-height
 	curpos = TEXTW(text) - TEXTW(&text[cursor]);
 	if ((curpos += lrpad / 2 - 1) < w) {
 		drw_setscheme(drw, scheme[SchemeNorm]);
-    drw_rect(drw, x + curpos, 2 + (bh-fh)/2, 2, fh - 4, 1, 0);
+		drw_rect(drw, x + curpos, 2 + (bh - fh) / 2, 2, fh - 4, 1, 0);
 	}
-  // <<<<<<<<<<<<<<<<<<<< scroll-line-height
 
-  // >>>>>>>>>>>>>>>>>>>> numbers
-  // ==================== numbers
-  // <<<<<<<<<<<<<<<<<<<< numbers
+   recalculatenumbers();
 	if (lines > 0) {
-    // >>>>>>>>>>>>>>>>>>>> grid-vertfull
-    // ==================== grid-vertfull
 		/* draw vertical list */
 		for (item = curr; item != next; item = item->right)
 			drawitem(item, x, y += bh, mw - x);
-    // <<<<<<<<<<<<<<<<<<<< grid-vertfull
 	} else if (matches) {
 		/* draw horizontal list */
 		x += inputw;
-    // >>>>>>>>>>>>>>>>>>>> symbols
-    // ==================== symbols
 		w = TEXTW("<");
-    // <<<<<<<<<<<<<<<<<<<< symbols
 		if (curr->left) {
 			drw_setscheme(drw, scheme[SchemeNorm]);
-      // >>>>>>>>>>>>>>>>>>>> symbols
-      // ==================== symbols
-      w = TEXTW("<");
-      drw_text(drw, x, 0, w, bh, lrpad / 2, "<", 0);
-      // <<<<<<<<<<<<<<<<<<<< symbols
+			drw_text(drw, x, 0, w, bh, lrpad / 2, "<", 0);
 		}
 		x += w;
 		for (item = curr; item != next; item = item->right)
-      // >>>>>>>>>>>>>>>>>>>> numbers-symbols
-      // ==================== numbers-symbols
-      x = drawitem(item, x, 0, MIN(TEXTW(item->text), mw - x - TEXTW(">")));
-      // <<<<<<<<<<<<<<<<<<<< numbers-symbols
+			x = drawitem(item, x, 0, MIN(TEXTW(item->text), mw - x - TEXTW(">") - TEXTW(numbers)));
 		if (next) {
-      // >>>>>>>>>>>>>>>>>>>> symbols
-      // ==================== symbols
 			w = TEXTW(">");
-      // <<<<<<<<<<<<<<<<<<<< symbols
 			drw_setscheme(drw, scheme[SchemeNorm]);
-      // >>>>>>>>>>>>>>>>>>>> numbers-symbols
-      // ==================== numbers-symbols
-      drw_text(drw, mw - w, 0, w, bh, lrpad / 2, ">", 0);
-      // <<<<<<<<<<<<<<<<<<<< numbers-symbols
+			drw_text(drw, mw - w - TEXTW(numbers), 0, w, bh, lrpad / 2, ">", 0);
 		}
 	}
-  // >>>>>>>>>>>>>>>>>>>> numbers
-  // ==================== numbers
-  // <<<<<<<<<<<<<<<<<<<< numbers
+	drw_setscheme(drw, scheme[SchemeNorm]);
+	drw_text(drw, mw - TEXTW(numbers), 0, TEXTW(numbers), bh, lrpad / 2, numbers, 0);
 	drw_map(drw, win, 0, 0, mw, mh);
 }
 
@@ -411,10 +273,7 @@ grabkeyboard(void)
 	struct timespec ts = { .tv_sec = 0, .tv_nsec = 1000000  };
 	int i;
 
-  // >>>>>>>>>>>>>>>>>>>> managed
-  // ==================== managed
 	if (embed)
-  // <<<<<<<<<<<<<<<<<<<< managed
 		return;
 	/* try to grab keyboard, we may have to wait for another process to ungrab */
 	for (i = 0; i < 1000; i++) {
@@ -426,25 +285,94 @@ grabkeyboard(void)
 	die("cannot grab keyboard");
 }
 
-// >>>>>>>>>>>>>>>>>>>> fuzzymatch
-// ==================== fuzzymatch
-// <<<<<<<<<<<<<<<<<<<< fuzzymatch
+int
+compare_distance(const void *a, const void *b)
+{
+	struct item *da = *(struct item **) a;
+	struct item *db = *(struct item **) b;
 
-// >>>>>>>>>>>>>>>>>>>> dynamic-options
-// ==================== dynamic-options
-// <<<<<<<<<<<<<<<<<<<< dynamic-options
+	if (!db)
+		return 1;
+	if (!da)
+		return -1;
+
+	return da->distance == db->distance ? 0 : da->distance < db->distance ? -1 : 1;
+}
+
+void
+fuzzymatch(void)
+{
+	/* bang - we have so much memory */
+	struct item *it;
+	struct item **fuzzymatches = NULL;
+	char c;
+	int number_of_matches = 0, i, pidx, sidx, eidx;
+	int text_len = strlen(text), itext_len;
+
+	matches = matchend = NULL;
+
+	/* walk through all items */
+	for (it = items; it && it->text; it++) {
+		if (text_len) {
+			itext_len = strlen(it->text);
+			pidx = 0; /* pointer */
+			sidx = eidx = -1; /* start of match, end of match */
+			/* walk through item text */
+			for (i = 0; i < itext_len && (c = it->text[i]); i++) {
+				/* fuzzy match pattern */
+				if (!fstrncmp(&text[pidx], &c, 1)) {
+					if(sidx == -1)
+						sidx = i;
+					pidx++;
+					if (pidx == text_len) {
+						eidx = i;
+						break;
+					}
+				}
+			}
+			/* build list of matches */
+			if (eidx != -1) {
+				/* compute distance */
+				/* add penalty if match starts late (log(sidx+2))
+				 * add penalty for long a match without many matching characters */
+				it->distance = log(sidx + 2) + (double)(eidx - sidx - text_len);
+				/* fprintf(stderr, "distance %s %f\n", it->text, it->distance); */
+				appenditem(it, &matches, &matchend);
+				number_of_matches++;
+			}
+		} else {
+			appenditem(it, &matches, &matchend);
+		}
+	}
+
+	if (number_of_matches) {
+		/* initialize array with matches */
+		if (!(fuzzymatches = realloc(fuzzymatches, number_of_matches * sizeof(struct item*))))
+			die("cannot realloc %u bytes:", number_of_matches * sizeof(struct item*));
+		for (i = 0, it = matches; it && i < number_of_matches; i++, it = it->right) {
+			fuzzymatches[i] = it;
+		}
+		/* sort matches according to distance */
+		qsort(fuzzymatches, number_of_matches, sizeof(struct item*), compare_distance);
+		/* rebuild list of matches */
+		matches = matchend = NULL;
+		for (i = 0, it = fuzzymatches[i];  i < number_of_matches && it && \
+				it->text; i++, it = fuzzymatches[i]) {
+			appenditem(it, &matches, &matchend);
+		}
+		free(fuzzymatches);
+	}
+	curr = sel = matches;
+	calcoffsets();
+}
 
 static void
 match(void)
 {
-  // >>>>>>>>>>>>>>>>>>>> dynamic-options
-  // ==================== dynamic-options
-  // <<<<<<<<<<<<<<<<<<<< dynamic-options
-
-  // >>>>>>>>>>>>>>>>>>>> fuzzymatch
-  // ==================== fuzzymatch
-  // <<<<<<<<<<<<<<<<<<<< fuzzymatch
-
+	if (fuzzy) {
+		fuzzymatch();
+		return;
+	}
 	static char **tokv = NULL;
 	static int tokn = 0;
 
@@ -452,13 +380,6 @@ match(void)
 	int i, tokc = 0;
 	size_t len, textsize;
 	struct item *item, *lprefix, *lsubstr, *prefixend, *substrend;
-  // >>>>>>>>>>>>>>>>>>>> high-priority
-  // ==================== high-priority
-  // <<<<<<<<<<<<<<<<<<<< high-priority
-
-  // >>>>>>>>>>>>>>>>>>>> json
-  // ==================== json
-  // <<<<<<<<<<<<<<<<<<<< json
 
 	strcpy(buf, text);
 	/* separate input text into tokens to be matched individually */
@@ -467,42 +388,22 @@ match(void)
 			die("cannot realloc %u bytes:", tokn * sizeof *tokv);
 	len = tokc ? strlen(tokv[0]) : 0;
 
-  // >>>>>>>>>>>>>>>>>>>> prefix-completition-high-priority
-  // ==================== prefix-completition-high-priority
 	matches = lprefix = lsubstr = matchend = prefixend = substrend = NULL;
 	textsize = strlen(text) + 1;
-  // <<<<<<<<<<<<<<<<<<<< prefix-completition-high-priority
 	for (item = items; item && item->text; item++) {
 		for (i = 0; i < tokc; i++)
 			if (!fstrstr(item->text, tokv[i]))
 				break;
-    // >>>>>>>>>>>>>>>>>>>> dynamic-options
-    // ==================== dynamic-options
 		if (i != tokc) /* not all tokens match */
-    // <<<<<<<<<<<<<<<<<<<< dynamic-options
 			continue;
-    // >>>>>>>>>>>>>>>>>>>> high-priority
-    // ==================== high-priority
-    /* exact matches go first, then prefixes, then substrings */
-    // <<<<<<<<<<<<<<<<<<<< high-priority
+		/* exact matches go first, then prefixes, then substrings */
 		if (!tokc || !fstrncmp(text, item->text, textsize))
 			appenditem(item, &matches, &matchend);
-    // >>>>>>>>>>>>>>>>>>>> high-priority
-    // ==================== high-priority
-    // <<<<<<<<<<<<<<<<<<<< high-priority
 		else if (!fstrncmp(tokv[0], item->text, len))
 			appenditem(item, &lprefix, &prefixend);
-    // >>>>>>>>>>>>>>>>>>>> prefix-completition
-    // ==================== prefix-completition
-    else
-    // <<<<<<<<<<<<<<<<<<<< prefix-completition
+		else
 			appenditem(item, &lsubstr, &substrend);
 	}
-
-  // >>>>>>>>>>>>>>>>>>>> high-priority
-  // ==================== high-priority
-  // <<<<<<<<<<<<<<<<<<<< high-priority
-
 	if (lprefix) {
 		if (matches) {
 			matchend->right = lprefix;
@@ -511,10 +412,7 @@ match(void)
 			matches = lprefix;
 		matchend = prefixend;
 	}
-  // >>>>>>>>>>>>>>>>>>>> prefix-completition
-  // ==================== prefix-completition
-  if (lsubstr) {
-  // <<<<<<<<<<<<<<<<<<<< prefix-completition
+	if (lsubstr) {
 		if (matches) {
 			matchend->right = lsubstr;
 			lsubstr->left = matchend;
@@ -523,11 +421,6 @@ match(void)
 		matchend = substrend;
 	}
 	curr = sel = matches;
-
-  // >>>>>>>>>>>>>>>>>>>> instant
-  // ==================== instant
-  // <<<<<<<<<<<<<<<<<<<< instant
-
 	calcoffsets();
 }
 
@@ -536,30 +429,12 @@ insert(const char *str, ssize_t n)
 {
 	if (strlen(text) + n > sizeof text - 1)
 		return;
-
-  // >>>>>>>>>>>>>>>>>>>> reject-no-match
-  static char last[BUFSIZ] = "";
-  if(reject_no_match) {
-    /* store last text value in case we need to revert it */
-    memcpy(last, text, BUFSIZ);
-  }
-  // <<<<<<<<<<<<<<<<<<<< reject-no-match
-
 	/* move existing text out of the way, insert new text, and update cursor */
 	memmove(&text[cursor + n], &text[cursor], sizeof text - cursor - MAX(n, 0));
 	if (n > 0)
 		memcpy(&text[cursor], str, n);
 	cursor += n;
 	match();
-
-  // >>>>>>>>>>>>>>>>>>>> reject-no-match
-  if(!matches && reject_no_match) {
-    /* revert to last text value if theres no match */
-    memcpy(text, last, BUFSIZ);
-    cursor -= n;
-    match();
-  }
-  // <<<<<<<<<<<<<<<<<<<< reject-no-match
 }
 
 static size_t
@@ -589,10 +464,6 @@ movewordedge(int dir)
 	}
 }
 
-// >>>>>>>>>>>>>>>>>>>> navhistory
-// ==================== navhistory
-// <<<<<<<<<<<<<<<<<<<< navhistory
-
 static void
 keypress(XKeyEvent *ev)
 {
@@ -600,12 +471,6 @@ keypress(XKeyEvent *ev)
 	int len;
 	KeySym ksym;
 	Status status;
-  // >>>>>>>>>>>>>>>>>>>> prefix-completition
-  // ==================== prefix-completition
-  // <<<<<<<<<<<<<<<<<<<< prefix-completition
-  // >>>>>>>>>>>>>>>>>>>> navhistory
-  // ==================== navhistory
-  // <<<<<<<<<<<<<<<<<<<< navhistory
 
 	len = XmbLookupString(xic, ev, buf, sizeof buf, &ksym, &status);
 	switch (status) {
@@ -654,9 +519,6 @@ keypress(XKeyEvent *ev)
 			XConvertSelection(dpy, (ev->state & ShiftMask) ? clip : XA_PRIMARY,
 			                  utf8, utf8, win, CurrentTime);
 			return;
-    // >>>>>>>>>>>>>>>>>>>> navhistory
-    // ==================== navhistory
-    // <<<<<<<<<<<<<<<<<<<< navhistory
 		case XK_Left:
 			movewordedge(-1);
 			goto draw;
@@ -665,9 +527,6 @@ keypress(XKeyEvent *ev)
 			goto draw;
 		case XK_Return:
 		case XK_KP_Enter:
-      // >>>>>>>>>>>>>>>>>>>> multi-selection
-      // ==================== multi-selection
-      // <<<<<<<<<<<<<<<<<<<< multi-selection
 			break;
 		case XK_bracketleft:
 			cleanup();
@@ -689,9 +548,6 @@ keypress(XKeyEvent *ev)
 		case XK_j: ksym = XK_Next;  break;
 		case XK_k: ksym = XK_Prior; break;
 		case XK_l: ksym = XK_Down;  break;
-    // >>>>>>>>>>>>>>>>>>>> navhistory
-    // ==================== navhistory
-    // <<<<<<<<<<<<<<<<<<<< navhistory
 		default:
 			return;
 		}
@@ -768,25 +624,13 @@ insert:
 		break;
 	case XK_Return:
 	case XK_KP_Enter:
-    // >>>>>>>>>>>>>>>>>>>> pipeout-json-multi-selection-print-input-text
-    // ==================== pipeout-json-multi-selection-print-input-text
-    puts((sel && !(ev->state & ShiftMask)) ? sel->text : text);
-    // <<<<<<<<<<<<<<<<<<<< pipeout-json-multi-selection-print-input-text
+		puts((sel && !(ev->state & ShiftMask)) ? sel->text : text);
 		if (!(ev->state & ControlMask)) {
-      // >>>>>>>>>>>>>>>>>>>> multi-selection
-      // ==================== multi-selection
-      // <<<<<<<<<<<<<<<<<<<< multi-selection
-      // >>>>>>>>>>>>>>>>>>>> navhistory
-      // ==================== navhistory
-      // <<<<<<<<<<<<<<<<<<<< navhistory
 			cleanup();
 			exit(0);
 		}
-    // >>>>>>>>>>>>>>>>>>>> multi-selection
-    // ==================== multi-selection
 		if (sel)
 			sel->out = 1;
-    // <<<<<<<<<<<<<<<<<<<< multi-selection
 		break;
 	case XK_Right:
 		if (text[cursor] != '\0') {
@@ -803,32 +647,18 @@ insert:
 		}
 		break;
 	case XK_Tab:
-    // >>>>>>>>>>>>>>>>>>>> prefix-completition
-    // ==================== prefix-completition
 		if (!sel)
 			return;
 		strncpy(text, sel->text, sizeof text - 1);
-    // <<<<<<<<<<<<<<<<<<<< prefix-completition
 		text[sizeof text - 1] = '\0';
-    // >>>>>>>>>>>>>>>>>>>> prefix-completition
-    // ==================== prefix-completition
 		cursor = strlen(text);
 		match();
-    // <<<<<<<<<<<<<<<<<<<< prefix-completition
 		break;
 	}
-
-  // >>>>>>>>>>>>>>>>>>>> incremental
-  // ==================== incremental
-  // <<<<<<<<<<<<<<<<<<<< incremental
 
 draw:
 	drawmenu();
 }
-
-// >>>>>>>>>>>>>>>>>>>> mouse-support
-// ==================== mouse-support
-// <<<<<<<<<<<<<<<<<<<< mouse-support
 
 static void
 paste(void)
@@ -848,91 +678,44 @@ paste(void)
 	drawmenu();
 }
 
-// >>>>>>>>>>>>>>>>>>>> json
-// ==================== json
-// <<<<<<<<<<<<<<<<<<<< json
-
 static void
-// >>>>>>>>>>>>>>>>>>>> dynamic-options
-// ==================== dynamic-options
 readstdin(void)
-// <<<<<<<<<<<<<<<<<<<< dynamic-options
 {
 	char buf[sizeof text], *p;
-  // >>>>>>>>>>>>>>>>>>>> json
-  // ==================== json
-  size_t i, imax = 0, size = 0;
-  // <<<<<<<<<<<<<<<<<<<< json
+	size_t i, imax = 0, size = 0;
 	unsigned int tmpmax = 0;
 
-  // >>>>>>>>>>>>>>>>>>>> password
-  // ==================== password
-  // <<<<<<<<<<<<<<<<<<<< password
-
 	/* read each line from stdin and add it to the item list */
-  // >>>>>>>>>>>>>>>>>>>> dynamic-options
-  // ==================== dynamic-options
 	for (i = 0; fgets(buf, sizeof buf, stdin); i++) {
-  // <<<<<<<<<<<<<<<<<<<< dynamic-options
-    // >>>>>>>>>>>>>>>>>>>> json
-    // ==================== json
 		if (i + 1 >= size / sizeof *items)
 			if (!(items = realloc(items, (size += BUFSIZ))))
 				die("cannot realloc %u bytes:", size);
-    // <<<<<<<<<<<<<<<<<<<< json
 		if ((p = strchr(buf, '\n')))
 			*p = '\0';
-    // >>>>>>>>>>>>>>>>>>>> json
-    // ==================== json
-    if (!(items[i].text = strdup(buf)))
-    // <<<<<<<<<<<<<<<<<<<< json
+		if (!(items[i].text = strdup(buf)))
 			die("cannot strdup %u bytes:", strlen(buf) + 1);
-    // >>>>>>>>>>>>>>>>>>>> json-multi-selection
-    // ==================== json-multi-selection
-    items[i].out = 0;
-    // <<<<<<<<<<<<<<<<<<<< json-multi-selection
-    // >>>>>>>>>>>>>>>>>>>> high-priority
-    // ==================== high-priority
-    // <<<<<<<<<<<<<<<<<<<< high-priority
+		items[i].out = 0;
 		drw_font_getexts(drw->fonts, buf, strlen(buf), &tmpmax, NULL);
 		if (tmpmax > inputw) {
 			inputw = tmpmax;
-      // >>>>>>>>>>>>>>>>>>>> json
-      // ==================== json
-      imax = i;
-      // <<<<<<<<<<<<<<<<<<<< json
+			imax = i;
 		}
 	}
 	if (items)
-    // >>>>>>>>>>>>>>>>>>>> json
-    // ==================== json
-    items[i].text = NULL;
-    // <<<<<<<<<<<<<<<<<<<< json
+		items[i].text = NULL;
 	inputw = items ? TEXTW(items[imax].text) : 0;
-  // >>>>>>>>>>>>>>>>>>>> json
-  // ==================== json
-  lines = MIN(lines, i);
-  // <<<<<<<<<<<<<<<<<<<< json
+	lines = MIN(lines, i);
 }
 
 static void
 run(void)
 {
 	XEvent ev;
-  // >>>>>>>>>>>>>>>>>>>> preselect
-  // ==================== preselect
-  // <<<<<<<<<<<<<<<<<<<< preselect
 
 	while (!XNextEvent(dpy, &ev)) {
-    // >>>>>>>>>>>>>>>>>>>> preselect
-    // ==================== preselect
-    // <<<<<<<<<<<<<<<<<<<< preselect
 		if (XFilterEvent(&ev, win))
 			continue;
 		switch(ev.type) {
-    // >>>>>>>>>>>>>>>>>>>> mouse-support
-    // ==================== mouse-support
-    // <<<<<<<<<<<<<<<<<<<< mouse-support
 		case DestroyNotify:
 			if (ev.xdestroywindow.window != win)
 				break;
@@ -978,28 +761,18 @@ setup(void)
 	int a, di, n, area = 0;
 #endif
 	/* init appearance */
-  // >>>>>>>>>>>>>>>>>>>> xresources
-  // ==================== xresources
 	for (j = 0; j < SchemeLast; j++)
 		scheme[j] = drw_scm_create(drw, colors[j], 2);
-  // <<<<<<<<<<<<<<<<<<<< xresources
 
 	clip = XInternAtom(dpy, "CLIPBOARD",   False);
 	utf8 = XInternAtom(dpy, "UTF8_STRING", False);
 
 	/* calculate menu geometry */
-  // >>>>>>>>>>>>>>>>>>>> line-height
 	bh = drw->fonts->h + 2;
-  bh = MAX(bh,lineheight);	/* make a menu line AT LEAST 'lineheight' tall */
-  // <<<<<<<<<<<<<<<<<<<< line-height
-  // >>>>>>>>>>>>>>>>>>>> dynamic-options
-  // ==================== dynamic-options
+	bh = MAX(bh,lineheight);	/* make a menu line AT LEAST 'lineheight' tall */
 	lines = MAX(lines, 0);
-  // <<<<<<<<<<<<<<<<<<<< dynamic-options
 	mh = (lines + 1) * bh;
-  // >>>>>>>>>>>>>>>>>>>> center
-  // ==================== center
-  // <<<<<<<<<<<<<<<<<<<< center
+	promptw = (prompt && *prompt) ? TEXTW(prompt) - lrpad / 4 : 0;
 #ifdef XINERAMA
 	i = 0;
 	if (parentwin == root && (info = XineramaQueryScreens(dpy, &n))) {
@@ -1026,11 +799,16 @@ setup(void)
 				if (INTERSECT(x, y, 1, 1, info[i]))
 					break;
 
-    // >>>>>>>>>>>>>>>>>>>> center-xyw
-    x = info[i].x_org + dmx;
-    y = info[i].y_org + (topbar ? dmy : info[i].height - mh - dmy);
-    mw = (dmw>0 ? dmw : info[i].width);
-    // <<<<<<<<<<<<<<<<<<<< center-xyw
+		if (centered) {
+			mw = MIN(MAX(max_textw() + promptw, min_width), info[i].width);
+			x = info[i].x_org + ((info[i].width  - mw) / 2);
+			y = info[i].y_org + ((info[i].height - mh) / 2);
+		} else {
+			x = info[i].x_org;
+			y = info[i].y_org + (topbar ? 0 : info[i].height - mh);
+			mw = info[i].width;
+		}
+
 		XFree(info);
 	} else
 #endif
@@ -1038,51 +816,29 @@ setup(void)
 		if (!XGetWindowAttributes(dpy, parentwin, &wa))
 			die("could not get embedding window attributes: 0x%lx",
 			    parentwin);
-    // >>>>>>>>>>>>>>>>>>>> center-xyw
-    x = dmx;
-    y = topbar ? dmy : wa.height - mh - dmy;
-    mw = (dmw>0 ? dmw : wa.width);
-    // <<<<<<<<<<<<<<<<<<<< center-xyw
+
+		if (centered) {
+			mw = MIN(MAX(max_textw() + promptw, min_width), wa.width);
+			x = (wa.width  - mw) / 2;
+			y = (wa.height - mh) / 2;
+		} else {
+			x = 0;
+			y = topbar ? 0 : wa.height - mh;
+			mw = wa.width;
+		}
 	}
-  // >>>>>>>>>>>>>>>>>>>> center
-  // ==================== center
-	promptw = (prompt && *prompt) ? TEXTW(prompt) - lrpad / 4 : 0;
-  // <<<<<<<<<<<<<<<<<<<< center
 	inputw = MIN(inputw, mw/3);
 	match();
 
 	/* create menu window */
-  // >>>>>>>>>>>>>>>>>>>> managed
-  // ==================== managed
-  swa.override_redirect = True;
-  // <<<<<<<<<<<<<<<<<<<< managed
+	swa.override_redirect = True;
 	swa.background_pixel = scheme[SchemeNorm][ColBg].pixel;
-  // >>>>>>>>>>>>>>>>>>>> mouse-support
-  // ==================== mouse-support
-  swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask;
-  // <<<<<<<<<<<<<<<<<<<< mouse-support
-
-	win = XCreateWindow(
-    dpy,
-    parentwin,
-    x,
-    y,
-    mw,
-    mh,
-    // >>>>>>>>>>>>>>>>>>>> border
-    border_width,
-    // <<<<<<<<<<<<<<<<<<<< border
-    CopyFromParent,
-    CopyFromParent,
-    CopyFromParent,
-    CWOverrideRedirect | CWBackPixel | CWEventMask,
-    &swa
-  );
-
-  // >>>>>>>>>>>>>>>>>>>> border
-  if (border_width) XSetWindowBorder(dpy, win, scheme[SchemeSel][ColBg].pixel);
-  // <<<<<<<<<<<<<<<<<<<< border
-
+	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask;
+	win = XCreateWindow(dpy, parentwin, x, y, mw, mh, border_width,
+	                    CopyFromParent, CopyFromParent, CopyFromParent,
+	                    CWOverrideRedirect | CWBackPixel | CWEventMask, &swa);
+	if (border_width)
+		XSetWindowBorder(dpy, win, scheme[SchemeSel][ColBg].pixel);
 	XSetClassHint(dpy, win, &ch);
 
 
@@ -1094,9 +850,6 @@ setup(void)
 	                XNClientWindow, win, XNFocusWindow, win, NULL);
 
 	XMapRaised(dpy, win);
-  // >>>>>>>>>>>>>>>>>>>> managed
-  // ==================== managed
-  // <<<<<<<<<<<<<<<<<<<< managed
 	if (embed) {
 		XSelectInput(dpy, parentwin, FocusChangeMask | SubstructureNotifyMask);
 		if (XQueryTree(dpy, parentwin, &dw, &w, &dws, &du) && dws) {
@@ -1113,93 +866,11 @@ setup(void)
 static void
 usage(void)
 {
-	fputs(
-    "usage: dmenu"
-    "\t"
-    "[-b]"
-    "[-f]"
-    "[-i]"
-    "[-v]"
-    // >>>>>>>>>>>>>>>>>>>> case-insensitive
-    // ==================== case-insensitive
-    // <<<<<<<<<<<<<<<<<<<< case-insensitive
-    // >>>>>>>>>>>>>>>>>>>> center
-    // ==================== center
-    // <<<<<<<<<<<<<<<<<<<< center
-    // >>>>>>>>>>>>>>>>>>>> fuzzymatch
-    // ==================== fuzzymatch
-    // <<<<<<<<<<<<<<<<<<<< fuzzymatch
-    // >>>>>>>>>>>>>>>>>>>> password
-    // ==================== password
-    // <<<<<<<<<<<<<<<<<<<< password
-    // >>>>>>>>>>>>>>>>>>>> incremental
-    // ==================== incremental
-    // <<<<<<<<<<<<<<<<<<<< incremental
-    // >>>>>>>>>>>>>>>>>>>> reject-no-match
-    "[-rnm]"
-    // <<<<<<<<<<<<<<<<<<<< reject-no-match
-    // >>>>>>>>>>>>>>>>>>>> prefix-completition
-    // ==================== prefix-completition
-    // <<<<<<<<<<<<<<<<<<<< prefix-completition
-    // >>>>>>>>>>>>>>>>>>>> instant
-    // ==================== instant
-    // <<<<<<<<<<<<<<<<<<<< instant
-    "\n\t\t"
-    "[-m monitor]"
-    "[-w windowid]"
-    // >>>>>>>>>>>>>>>>>>>> xyw
-    "[-xx xoffset]"
-    "[-yy yoffset]"
-    "[-ww width]"
-    // <<<<<<<<<<<<<<<<<<<< xyw
-    "\n\t\t"
-    // >>>>>>>>>>>>>>>>>>>> border
-    "[-bw width]"
-    // <<<<<<<<<<<<<<<<<<<< border
-    "[-l lines]"
-    "[-fn font]"
-    "[-p prompt]"
-    // >>>>>>>>>>>>>>>>>>>> dynamic-options
-    // ==================== dynamic-options
-    // <<<<<<<<<<<<<<<<<<<< dynamic-options
-    // >>>>>>>>>>>>>>>>>>>> grid
-    // ==================== grid
-    // <<<<<<<<<<<<<<<<<<<< grid
-    // >>>>>>>>>>>>>>>>>>>> preselect
-    // ==================== preselect
-    // <<<<<<<<<<<<<<<<<<<< preselect
-    // >>>>>>>>>>>>>>>>>>>> initial-text
-    // ==================== initial-text
-    // <<<<<<<<<<<<<<<<<<<< initial-text
-    // >>>>>>>>>>>>>>>>>>>> json
-    // ==================== json
-    // <<<<<<<<<<<<<<<<<<<< json
-    // >>>>>>>>>>>>>>>>>>>> navhistory
-    // ==================== navhistory
-    // <<<<<<<<<<<<<<<<<<<< navhistory
-    // >>>>>>>>>>>>>>>>>>>> line-height
-    "[-lh height]"
-    // <<<<<<<<<<<<<<<<<<<< line-height
-    // >>>>>>>>>>>>>>>>>>>> high-priority
-    // ==================== high-priority
-    // <<<<<<<<<<<<<<<<<<<< high-priority
-    "\n\t\t"
-    "[-nb color]"
-    "[-nf color]"
-    "[-sb color]"
-    "[-sf color]"
-    // >>>>>>>>>>>>>>>>>>>> fuzzyhighlight
-    // ==================== fuzzyhighlight
-    // <<<<<<<<<<<<<<<<<<<< fuzzyhighlight
-    "\n",
-    stderr
-  );
+	fputs("usage: dmenu [-bfiv] [-l lines] [-h height] [-p prompt] [-fn font] [-m monitor]\n"
+	      "             [-nb color] [-nf color] [-sb color] [-sf color]\n"
+	      "             [-nhb color] [-nhf color] [-shb color] [-shf color] [-w windowid]\n", stderr);
 	exit(1);
 }
-
-// >>>>>>>>>>>>>>>>>>>> xresources
-// ==================== xresources
-// <<<<<<<<<<<<<<<<<<<< xresources
 
 int
 main(int argc, char *argv[])
@@ -1214,123 +885,50 @@ main(int argc, char *argv[])
 			exit(0);
 		} else if (!strcmp(argv[i], "-b")) /* appears at the bottom of the screen */
 			topbar = 0;
+		else if (!strcmp(argv[i], "-nhb")) /* normal hi background color */
+			colors[SchemeNormHighlight][ColBg] = argv[++i];
+		else if (!strcmp(argv[i], "-nhf")) /* normal hi foreground color */
+			colors[SchemeNormHighlight][ColFg] = argv[++i];
+		else if (!strcmp(argv[i], "-shb")) /* selected hi background color */
+			colors[SchemeSelHighlight][ColBg] = argv[++i];
+		else if (!strcmp(argv[i], "-shf")) /* selected hi foreground color */
+			colors[SchemeSelHighlight][ColFg] = argv[++i];
 		else if (!strcmp(argv[i], "-f"))   /* grabs keyboard before reading stdin */
 			fast = 1;
-    // >>>>>>>>>>>>>>>>>>>> case-insensitive
-    // ==================== case-insensitive
-    // <<<<<<<<<<<<<<<<<<<< case-insensitive
-    // >>>>>>>>>>>>>>>>>>>> center
-    // ==================== center
-    // <<<<<<<<<<<<<<<<<<<< center
-    // >>>>>>>>>>>>>>>>>>>> fuzzymatch
-    // ==================== fuzzymatch
-    // <<<<<<<<<<<<<<<<<<<< fuzzymatch
-    // >>>>>>>>>>>>>>>>>>>> password
-    // ==================== password
-    // <<<<<<<<<<<<<<<<<<<< password
-    // >>>>>>>>>>>>>>>>>>>> incremental
-    // ==================== incremental
-    // <<<<<<<<<<<<<<<<<<<< incremental
-    // >>>>>>>>>>>>>>>>>>>> managed
-    // ==================== managed
-    // <<<<<<<<<<<<<<<<<<<< managed
-    // >>>>>>>>>>>>>>>>>>>> reject-no-match
-    else if (!strcmp(argv[i], "-rnm")) /* reject input which results in no match */
-      reject_no_match = 1;
-    // <<<<<<<<<<<<<<<<<<<< reject-no-match
-    // >>>>>>>>>>>>>>>>>>>> prefix-completition
-    // ==================== prefix-completition
-    // <<<<<<<<<<<<<<<<<<<< prefix-completition
-    // >>>>>>>>>>>>>>>>>>>> instant
-    // ==================== instant
-    // <<<<<<<<<<<<<<<<<<<< instant
-    // >>>>>>>>>>>>>>>>>>>> print-input-text
-    // ==================== print-input-text
-    // <<<<<<<<<<<<<<<<<<<< print-input-text
-		else if (!strcmp(argv[i], "-i")) { /* case-insensitive item matching */
-			fstrncmp = strncasecmp;
-			fstrstr = cistrstr;
+		else if (!strcmp(argv[i], "-c"))   /* centers dmenu on screen */
+			centered = 1;
+		else if (!strcmp(argv[i], "-F"))   /* grabs keyboard before reading stdin */
+			fuzzy = 0;
+		else if (!strcmp(argv[i], "-s")) { /* case-sensitive item matching */
+			fstrncmp = strncmp;
+			fstrstr = strstr;
 		} else if (i + 1 == argc)
 			usage();
 		/* these options take one argument */
-    // >>>>>>>>>>>>>>>>>>>> grid
-    // ==================== grid
 		else if (!strcmp(argv[i], "-l"))   /* number of lines in vertical list */
 			lines = atoi(argv[++i]);
-    // <<<<<<<<<<<<<<<<<<<< grid
+		else if (!strcmp(argv[i], "-h")) { /* minimum height of one menu line */
+			lineheight = atoi(argv[++i]);
+			lineheight = MAX(lineheight, min_lineheight);
+		}
 		else if (!strcmp(argv[i], "-m"))
 			mon = atoi(argv[++i]);
 		else if (!strcmp(argv[i], "-p"))   /* adds prompt to left of input field */
 			prompt = argv[++i];
 		else if (!strcmp(argv[i], "-fn"))  /* font or font set */
-      // >>>>>>>>>>>>>>>>>>>> xresources
-      // ==================== xresources
-      fonts[0] = argv[++i];
-      // <<<<<<<<<<<<<<<<<<<< xresources
+			fonts[0] = argv[++i];
 		else if (!strcmp(argv[i], "-nb"))  /* normal background color */
-      // >>>>>>>>>>>>>>>>>>>> xresources
-      // ==================== xresources
-      colors[SchemeNorm][ColBg] = argv[++i];
-      // <<<<<<<<<<<<<<<<<<<< xresources
+			colors[SchemeNorm][ColBg] = argv[++i];
 		else if (!strcmp(argv[i], "-nf"))  /* normal foreground color */
-      // >>>>>>>>>>>>>>>>>>>> xresources
-      // ==================== xresources
-      colors[SchemeNorm][ColFg] = argv[++i];
-      // <<<<<<<<<<<<<<<<<<<< xresources
+			colors[SchemeNorm][ColFg] = argv[++i];
 		else if (!strcmp(argv[i], "-sb"))  /* selected background color */
-      // >>>>>>>>>>>>>>>>>>>> xresources
-      // ==================== xresources
 			colors[SchemeSel][ColBg] = argv[++i];
-      // <<<<<<<<<<<<<<<<<<<< xresources
 		else if (!strcmp(argv[i], "-sf"))  /* selected foreground color */
-      // >>>>>>>>>>>>>>>>>>>> xresources
-      // ==================== xresources
-      colors[SchemeSel][ColFg] = argv[++i];
-      // <<<<<<<<<<<<<<<<<<<< xresources
+			colors[SchemeSel][ColFg] = argv[++i];
 		else if (!strcmp(argv[i], "-w"))   /* embedding window id */
 			embed = argv[++i];
-    // >>>>>>>>>>>>>>>>>>>> border
-    else if (!strcmp(argv[i], "-bw"))
-      border_width = atoi(argv[++i]); /* border width */
-    // <<<<<<<<<<<<<<<<<<<< border
-    // >>>>>>>>>>>>>>>>>>>> dynamic-options
-    // ==================== dynamic-options
-    // <<<<<<<<<<<<<<<<<<<< dynamic-options
-    // >>>>>>>>>>>>>>>>>>>> fuzzyhighlight
-    // ==================== fuzzyhighlight
-    // <<<<<<<<<<<<<<<<<<<< fuzzyhighlight
-    // >>>>>>>>>>>>>>>>>>>> grid
-    // ==================== grid
-    // <<<<<<<<<<<<<<<<<<<< grid
-    // >>>>>>>>>>>>>>>>>>>> xyw
-    else if (!strcmp(argv[i], "-xx"))   /* window x offset */
-      dmx = atoi(argv[++i]);
-    else if (!strcmp(argv[i], "-yy"))   /* window y offset (from bottom up if -b) */
-      dmy = atoi(argv[++i]);
-    else if (!strcmp(argv[i], "-ww"))   /* make dmenu this wide */
-      dmw = atoi(argv[++i]);
-    // <<<<<<<<<<<<<<<<<<<< xyw
-    // >>>>>>>>>>>>>>>>>>>> preselect
-    // ==================== preselect
-    // <<<<<<<<<<<<<<<<<<<< preselect
-    // >>>>>>>>>>>>>>>>>>>> initial-text
-    // ==================== initial-text
-    // <<<<<<<<<<<<<<<<<<<< initial-text
-    // >>>>>>>>>>>>>>>>>>>> json
-    // ==================== json
-    // <<<<<<<<<<<<<<<<<<<< json
-    // >>>>>>>>>>>>>>>>>>>> navhistory
-    // ==================== navhistory
-    // <<<<<<<<<<<<<<<<<<<< navhistory
-    // >>>>>>>>>>>>>>>>>>>> line-height
-    else if(!strcmp(argv[i], "-lh")) { /* minimum height of one menu line */
-      lineheight = atoi(argv[++i]);
-      lineheight = MAX(lineheight,8); /* reasonable default in case of value too small/negative */
-    }
-    // <<<<<<<<<<<<<<<<<<<< line-height
-    // >>>>>>>>>>>>>>>>>>>> high-priority
-    // ==================== high-priority
-    // <<<<<<<<<<<<<<<<<<<< high-priority
+		else if (!strcmp(argv[i], "-bw"))
+			border_width = atoi(argv[++i]); /* border width */
 		else
 			usage();
 
@@ -1346,15 +944,8 @@ main(int argc, char *argv[])
 		die("could not get embedding window attributes: 0x%lx",
 		    parentwin);
 	drw = drw_create(dpy, screen, root, wa.width, wa.height);
-  // >>>>>>>>>>>>>>>>>>>> xresources
-  // ==================== xresources
-  if (!drw_fontset_create(drw, fonts, LENGTH(fonts)))
-  // <<<<<<<<<<<<<<<<<<<< xresources
+	if (!drw_fontset_create(drw, fonts, LENGTH(fonts)))
 		die("no fonts could be loaded.");
-
-  // >>>>>>>>>>>>>>>>>>>> xresources
-  // ==================== xresources
-  // <<<<<<<<<<<<<<<<<<<< xresources
 	lrpad = drw->fonts->h;
 
 #ifdef __OpenBSD__
@@ -1362,21 +953,11 @@ main(int argc, char *argv[])
 		die("pledge");
 #endif
 
-  // >>>>>>>>>>>>>>>>>>>> navhistory
-  // ==================== navhistory
-  // <<<<<<<<<<<<<<<<<<<< navhistory
-
 	if (fast && !isatty(0)) {
 		grabkeyboard();
-    // >>>>>>>>>>>>>>>>>>>> dynamic-options-json
-    // ==================== dynamic-options-json
 		readstdin();
-    // <<<<<<<<<<<<<<<<<<<< dynamic-options-json
 	} else {
-    // >>>>>>>>>>>>>>>>>>>> dynamic-options-json
-    // ==================== dynamic-options-json
 		readstdin();
-    // <<<<<<<<<<<<<<<<<<<< dynamic-options-json
 		grabkeyboard();
 	}
 	setup();

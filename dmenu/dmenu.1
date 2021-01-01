@@ -3,89 +3,17 @@
 dmenu \- dynamic menu
 .SH SYNOPSIS
 .B dmenu
-.RB [ \-b ]
-.RB [ \-f ]
-.RB [ \-i ]
-.RB [ \-v ]
-\" >>>>>>>>>>>>>>>>>>>> case-insensitive
-\" ==================== case-insensitive
-\" <<<<<<<<<<<<<<<<<<<< case-insensitive
-\" >>>>>>>>>>>>>>>>>>>> center
-\" ==================== center
-\" <<<<<<<<<<<<<<<<<<<< center
-\" >>>>>>>>>>>>>>>>>>>> fuzzymatch
-\" ==================== fuzzymatch
-\" <<<<<<<<<<<<<<<<<<<< fuzzymatch
-\" >>>>>>>>>>>>>>>>>>>> xyw
-.RB [ \-mm ]
-.RB [ \-bb ]
-.RB [ \-xx
-.IR xoffset ]
-.RB [ \-yy
-.IR yoffset ]
-.RB [ \-ww
-.IR width ]
-\" <<<<<<<<<<<<<<<<<<<< xyw
-\" >>>>>>>>>>>>>>>>>>>> password
-\" ==================== password
-\" <<<<<<<<<<<<<<<<<<<< password
-\" >>>>>>>>>>>>>>>>>>>> incremental
-\" ==================== incremental
-\" <<<<<<<<<<<<<<<<<<<< incremental
-\" >>>>>>>>>>>>>>>>>>>> managed
-\" ==================== managed
-\" <<<<<<<<<<<<<<<<<<<< managed
-\" >>>>>>>>>>>>>>>>>>>> reject-no-match
-.RB [ \-rnm ]
-\" <<<<<<<<<<<<<<<<<<<< reject-no-match
-\" >>>>>>>>>>>>>>>>>>>> prefix-completition
-\" ==================== prefix-completition
-\" <<<<<<<<<<<<<<<<<<<< prefix-completition
-\" >>>>>>>>>>>>>>>>>>>> instant
-\" ==================== instant
-\" <<<<<<<<<<<<<<<<<<<< instant
-\" >>>>>>>>>>>>>>>>>>>> print-input-text
-\" ==================== print-input-text
-\" <<<<<<<<<<<<<<<<<<<< print-input-text
-.RB [ \-m
-.IR monitor ]
-.RB [ \-w
-.IR windowid ]
+.RB [ \-bfiv ]
 .RB [ \-l
 .IR lines ]
-.RB [ \-fn
-.IR font ]
+.RB [ \-h
+.IR height ]
+.RB [ \-m
+.IR monitor ]
 .RB [ \-p
 .IR prompt ]
-\" >>>>>>>>>>>>>>>>>>>> border
-.RB [ \-bw
-.IR width ]
-\" <<<<<<<<<<<<<<<<<<<< border
-\" >>>>>>>>>>>>>>>>>>>> dynamic-options
-\" ==================== dynamic-options
-\" <<<<<<<<<<<<<<<<<<<< dynamic-options
-\" >>>>>>>>>>>>>>>>>>>> grid
-\" ==================== grid
-\" <<<<<<<<<<<<<<<<<<<< grid
-\" >>>>>>>>>>>>>>>>>>>> preselect
-\" ==================== preselect
-\" <<<<<<<<<<<<<<<<<<<< preselect
-\" >>>>>>>>>>>>>>>>>>>> initial-text
-\" ==================== initial-text
-\" <<<<<<<<<<<<<<<<<<<< initial-text
-\" >>>>>>>>>>>>>>>>>>>> json
-\" ==================== json
-\" <<<<<<<<<<<<<<<<<<<< json
-\" >>>>>>>>>>>>>>>>>>>> navhistory
-\" ==================== navhistory
-\" <<<<<<<<<<<<<<<<<<<< navhistory
-\" >>>>>>>>>>>>>>>>>>>> line-height
-.RB [ \-lh
-.IR heigh ]
-\" <<<<<<<<<<<<<<<<<<<< line-height
-\" >>>>>>>>>>>>>>>>>>>> high-priority
-\" ==================== high-priority
-\" <<<<<<<<<<<<<<<<<<<< high-priority
+.RB [ \-fn
+.IR font ]
 .RB [ \-nb
 .IR color ]
 .RB [ \-nf
@@ -94,9 +22,16 @@ dmenu \- dynamic menu
 .IR color ]
 .RB [ \-sf
 .IR color ]
-\" >>>>>>>>>>>>>>>>>>>> fuzzyhighlight
-\" ==================== fuzzyhighlight
-\" <<<<<<<<<<<<<<<<<<<< fuzzyhighlight
+.RB [ \-nhb
+.IR color ]
+.RB [ \-nhf
+.IR color ]
+.RB [ \-shb
+.IR color ]
+.RB [ \-shf
+.IR color ]
+.RB [ \-w
+.IR windowid ]
 .P
 .BR dmenu_run " ..."
 .SH DESCRIPTION
@@ -115,6 +50,9 @@ which lists programs in the user's $PATH and runs the result in their $SHELL.
 .B \-b
 dmenu appears at the bottom of the screen.
 .TP
+.B \-c
+dmenu appears centered on the screen.
+.TP
 .B \-f
 dmenu grabs the keyboard before reading stdin if not reading from a tty. This
 is faster, but will lock up X until stdin reaches end\-of\-file.
@@ -122,104 +60,22 @@ is faster, but will lock up X until stdin reaches end\-of\-file.
 .B \-i
 dmenu matches menu items case insensitively.
 .TP
-.B \-v
-prints version information to stdout, then exits.
+.BI \-l " lines"
+dmenu lists items vertically, with the given number of lines.
 .TP
-\" >>>>>>>>>>>>>>>>>>>> case-insensitive
-\" ==================== case-insensitive
-\" <<<<<<<<<<<<<<<<<<<< case-insensitive
-\" >>>>>>>>>>>>>>>>>>>> center
-\" ==================== center
-\" <<<<<<<<<<<<<<<<<<<< center
-\" >>>>>>>>>>>>>>>>>>>> fuzzymatch
-\" ==================== fuzzymatch
-\" <<<<<<<<<<<<<<<<<<<< fuzzymatch
-\" >>>>>>>>>>>>>>>>>>>> xyw
-.B \-mm
-if present, the measurement will use the given monitor.
+.BI \-h " height"
+dmenu uses a menu line of at least 'height' pixels tall, but no less than 8.
 .TP
-.BI \-xx " xoffset"
-dmenu is placed at this offset measured from the left side of the monitor.
-Can be negative.
-If option
-.BI \-yy " yoffset"
-dmenu is placed at this offset measured from the top of the monitor.  If the
-.B \-mm
-if present, the measurement will use the given monitor.
-.TP
-.BI \-ww " width"
-sets the width of the dmenu window.
-.TP
-\" <<<<<<<<<<<<<<<<<<<< xyw
-\" >>>>>>>>>>>>>>>>>>>> password
-\" ==================== password
-\" <<<<<<<<<<<<<<<<<<<< password
-\" >>>>>>>>>>>>>>>>>>>> incremental
-\" ==================== incremental
-\" <<<<<<<<<<<<<<<<<<<< incremental
-\" >>>>>>>>>>>>>>>>>>>> managed
-\" ==================== managed
-\" <<<<<<<<<<<<<<<<<<<< managed
-\" >>>>>>>>>>>>>>>>>>>> reject-no-match
-.B \-r
-dmenu will reject any input which would result in no matching option left.
-.TP
-\" <<<<<<<<<<<<<<<<<<<< reject-no-match
-\" >>>>>>>>>>>>>>>>>>>> prefix-completition
-\" ==================== prefix-completition
-\" <<<<<<<<<<<<<<<<<<<< prefix-completition
-\" >>>>>>>>>>>>>>>>>>>> instant
-\" ==================== instant
-\" <<<<<<<<<<<<<<<<<<<< instant
-\" >>>>>>>>>>>>>>>>>>>> print-input-text
-\" ==================== print-input-text
-\" <<<<<<<<<<<<<<<<<<<< print-input-text
 .BI \-m " monitor"
 dmenu is displayed on the monitor number supplied. Monitor numbers are starting
 from 0.
 .TP
-.BI \-w " windowid"
-embed into windowid.
-.BI \-l " lines"
-dmenu lists items vertically, with the given number of lines.
+.BI \-p " prompt"
+defines the prompt to be displayed to the left of the input field.
 .TP
 .BI \-fn " font"
 defines the font or font set used.
 .TP
-.BI \-p " prompt"
-defines the prompt to be displayed to the left of the input field.
-.TP
-\" >>>>>>>>>>>>>>>>>>>> border
-.BI \-bw " width"
-defines the width of the dmenu window borders
-.TP
-\" <<<<<<<<<<<<<<<<<<<< border
-\" >>>>>>>>>>>>>>>>>>>> dynamic-options
-\" ==================== dynamic-options
-\" <<<<<<<<<<<<<<<<<<<< dynamic-options
-\" >>>>>>>>>>>>>>>>>>>> grid
-\" ==================== grid
-\" <<<<<<<<<<<<<<<<<<<< grid
-\" >>>>>>>>>>>>>>>>>>>> preselect
-\" ==================== preselect
-\" <<<<<<<<<<<<<<<<<<<< preselect
-\" >>>>>>>>>>>>>>>>>>>> initial-text
-\" ==================== initial-text
-\" <<<<<<<<<<<<<<<<<<<< initial-text
-\" >>>>>>>>>>>>>>>>>>>> json
-\" ==================== json
-\" <<<<<<<<<<<<<<<<<<<< json
-\" >>>>>>>>>>>>>>>>>>>> navhistory
-\" ==================== navhistory
-\" <<<<<<<<<<<<<<<<<<<< navhistory
-\" >>>>>>>>>>>>>>>>>>>> line-height
-.BI \-lh " height"
-dmenu uses a menu line of at least 'height' pixels tall, but no less than 8.
-.TP
-\" <<<<<<<<<<<<<<<<<<<< line-height
-\" >>>>>>>>>>>>>>>>>>>> high-priority
-\" ==================== high-priority
-\" <<<<<<<<<<<<<<<<<<<< high-priority
 .BI \-nb " color"
 defines the normal background color.
 .IR #RGB ,
@@ -235,9 +91,23 @@ defines the selected background color.
 .BI \-sf " color"
 defines the selected foreground color.
 .TP
-\" >>>>>>>>>>>>>>>>>>>> fuzzyhighlight
-\" ==================== fuzzyhighlight
-\" <<<<<<<<<<<<<<<<<<<< fuzzyhighlight
+.BI \-nhb " color"
+defines the normal highlight background color.
+.TP
+.BI \-nhf " color"
+defines the normal highlight foreground color.
+.TP
+.BI \-shb " color"
+defines the selected highlight background color.
+.TP
+.BI \-shf " color"
+defines the selected highlight foreground color.
+.TP
+.B \-v
+prints version information to stdout, then exits.
+.TP
+.BI \-w " windowid"
+embed into windowid.
 .SH USAGE
 dmenu is completely controlled by the keyboard.  Items are selected using the
 arrow keys, page up, page down, home, and end.
@@ -247,19 +117,13 @@ Copy the selected item to the input field.
 .TP
 .B Return
 Confirm selection.  Prints the selected item to stdout and exits, returning
-\" >>>>>>>>>>>>>>>>>>>> print-input-text
-\" ==================== print-input-text
 success.
-\" <<<<<<<<<<<<<<<<<<<< print-input-text
 .TP
 .B Ctrl-Return
 Confirm selection.  Prints the selected item to stdout and continues.
 .TP
 .B Shift\-Return
 Confirm input.  Prints the input text to stdout and exits, returning success.
-\" >>>>>>>>>>>>>>>>>>>> print-input-text
-\" ==================== print-input-text
-\" <<<<<<<<<<<<<<<<<<<< print-input-text
 .TP
 .B Escape
 Exit without selecting an item, returning failure.
