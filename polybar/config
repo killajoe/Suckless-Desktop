@@ -32,15 +32,22 @@ height = 28
 radius = 0
 fixed-center = true
 
+tray-position = right
+tray-padding = 10
+
+bottom = false
+
 background = ${colors.background}
 foreground = ${colors.foreground}
 override-redirect = false
 line-size = 0
 line-color = #0ff
 
-border-color = #00000000
+border-color = #000000
 border-bottom-size = 0
-border-bottom-color = ${colors.aqua}
+border-top-size = 0
+border-bottom-color = #141414
+border-top-color = #141414
 
 padding-right = 0
 
@@ -48,20 +55,29 @@ module-margin-left = 0
 module-margin-right = 0
 
 ;font-0 = JetBrains Mono NL,JetBrains Mono NL Medium:style=Medium,Regular:pixelsize=10;4
+;font-0 = Inter:style=regular:size=10;3
+;font-1 = Font Awesome 5 Pro:style=Solid:pixelsize=9;3
+;font-2 = Weather Icons:size=12;1
+;font-3 = Font Awesome 5 Pro:pixelsize=9;3
+;font-4 = Font Awesome 5 Brands:pixelsize=9;2
+;font-5 = Material Design Icons:pixelsize=15;5
+
 font-0 = Inter:style=regular:size=10;3
 font-1 = Font Awesome 5 Pro:style=Solid:pixelsize=9;3
-font-2 = Font Awesome 5 Pro:pixelsize=9;3
-font-3 = Font Awesome 5 Brands:pixelsize=9;2
-font-4 = Material Design Icons:pixelsize=15;5
+;font-2 = Font Awesome 5 Pro:pixelsize=9;3
+font-2 = Font Awesome 5 Brands:pixelsize=9;2
+font-3 = Material Design Icons:pixelsize=15;5
 
 ;;;;;;;;;;;;;;;;;;
 ;; MODULES USED ;;
 ;;;;;;;;;;;;;;;;;;
 
-modules-left = xdesktops layouts
-modules-center = xwindow
+;modules-left = xdesktops layouts
+modules-left = dwm2 xwindow
+modules-center = mpd
 ;modules-center =
-modules-right = mpd hour date volume wired-network
+#modules-right = weather cpu memory temperature hour date volume wired-network
+modules-right = weather cpu temperature memory hour date
 
 cursor-click = pointer
 cursor-scroll = ns-resize
@@ -70,6 +86,15 @@ cursor-scroll = ns-resize
 ;;;;;;;;;;;;;
 ;; MODULES ;;
 ;;;;;;;;;;;;;
+
+
+[module/weather]
+type = custom/script
+exec = ~/.config/polybar/weather.sh
+interval = 600
+format-padding = 2
+label-padding = 2
+
 
 ;;;;;;;;;;;;;
 ;; XWINDOW ;;
@@ -539,3 +564,125 @@ format-prefix-background = #141414
 label-background = #141414
 format-background = #141414
 format-foreground = #c6c6c6
+
+
+
+[module/dwm2]
+type = internal/dwm
+format = <label-tags> <label-layout>
+;<label-floating> 
+;<label-title>
+
+enable-tags-click = true
+enable-tags-scroll = false
+
+tags-scroll-empty = false
+tags-scroll-reverse = false
+tags-scroll-wrap = false
+
+enable-layout-click = false
+enable-layout-scroll = false
+layout-scroll-wrap = false
+layout-scroll-reverse = false
+
+secondary-layout-symbol = [M]
+
+
+label-title = %title%
+label-title-maxlen = 35
+label-title-padding = 4
+label-title-foreground = #c6c6c6
+label-title-background = #141414
+
+label-layout = %symbol%
+label-layout-padding = 4
+label-layout-foreground = #c6c6c6
+label-layout-background = #141414
+
+; focused = Active tag on focused monitor
+label-focused = %name%
+label-focused-background = #141414
+label-focused-foreground = #c6c6c6
+label-focused-padding = 4
+label-focused-font = 7
+label-focused-underline = #c6c6c6
+
+
+; unfocused = Inactive tag on any monitor
+label-unfocused = %name%
+label-unfocused-background = #141414
+label-unfocused-foreground = #444444
+label-unfocused-padding = 4
+label-unfocused-font = 7
+
+; visible = Active tag on unfocused monitor
+label-visible = %name%
+label-visible-background = #141414
+label-visible-foreground = #7e9cb9
+label-visible-padding = 4
+label-visible-font = 7
+label-visible-underline = #7e9cb9
+label-visible-underline-padding = 4
+
+; urgent = Tag with urgency hint set
+label-urgent = %name%
+label-urgent-background = #f76767
+label-urgent-padding = 4
+label-urgent-font = 7
+
+; empty = Tags with no windows assigned
+; This can be set to an empty string to hide empty tags
+;label-empty =
+label-empty-padding = 4
+label-empty-foreground = #444444
+label-empty-font = 7
+
+; Separator in between workspaces
+;label-separator = |
+;label-separator-padding = 2
+
+
+[module/cpu]
+type = internal/cpu
+interval = 2
+format-prefix = " "
+format-padding = 2
+format-prefix-foreground = #c6c6c6
+format-underline = #f90000
+label = %percentage%%
+label-padding = 2
+
+[module/memory]
+type = internal/memory
+interval = 2
+format-prefix = " "
+format-padding = 2
+format-prefix-foreground = #c6c6c6
+format-underline = #4bffdc
+label = %percentage_used%%
+label-padding = 2
+
+
+[module/temperature]
+type = internal/temperature
+thermal-zone = 0
+warn-temperature = 60
+
+format = <ramp> <label>
+format-underline = #f50a4d
+format-warn = <ramp> <label-warn>
+format-warn-underline = ${self.format-underline}
+format-padding = 2
+
+
+label = %temperature%
+label-warn = %temperature%
+label-warn-foreground = #f76767
+label-padding = 2
+
+ramp-0 = 
+ramp-1 = 
+ramp-2 = 
+ramp-3 = 
+ramp-4 = 
+ramp-foreground = ${colors.foreground-alt}
