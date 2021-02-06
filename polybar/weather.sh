@@ -22,8 +22,8 @@ get_icon() {
     echo $icon
 }
 
-KEY="APIKEY"
-CITY="CITY"
+KEY="6165837fe4ac9e20213752dd0fba908e"
+CITY="Napier"
 UNITS="metric"
 SYMBOL="°"
 

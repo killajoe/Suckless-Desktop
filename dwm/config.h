@@ -25,7 +25,7 @@ static const unsigned int systraypinning = 0;   /* 0: sloppy systray follows sel
 static const unsigned int systrayspacing = 0;   /* systray spacing */
 static const int systraypinningfailfirst = 1;   /* 1: if pinning fails, display systray on the first monitor, False: display systray on the last monitor*/
 static const int showsystray             = 1;   /* 0 means no systray */
-static const char *fonts[]         		 = {"Inter:style=Regular:size=5", "Font Awesome 5 Pro:style=Solid:pixelsize=12:antialias=true", "Font Awesome 5 Brands:style=Solid:pixelsize=12:antialias=true", "Material Design Icons:Regular:pixelsize=22:antialias=true"};
+static const char *fonts[]         		 = {"Inter:style=Regular:size=10", "Font Awesome 5 Pro:style=Solid:pixelsize=12:antialias=true", "Font Awesome 5 Brands:style=Solid:pixelsize=12:antialias=true", "Material Design Icons:Regular:pixelsize=22:antialias=true"};
 static const char dmenufont[]            = "SF Pro Text:size=5";
 static const char col_gray1[]            = "#141414";
 static const char col_gray2[]            = "#505050";
@@ -52,7 +52,8 @@ static const unsigned int alphas[][3] = {
 };
 
 /* tagging */
-static const char *tags[] = { "", "", "", "", "", "", "", "", "", "" };
+static const char *tags[] = { "", "", "", "", "", "", "", "", "", "" };
+/*static const char *tags[] = { "", "", "", "", "", "", "", "", "", "" };*/
 
 static const Rule rules[] = {
 	/* xprop(1):
@@ -63,9 +64,12 @@ static const Rule rules[] = {
 	/* class            role                          instance     title   tags mask  switchtag  iscentered   isfloating   monitor */
 	{ "qutebrowser",    NULL,                         NULL,        NULL,   1,	      1,         0,           0,            1 },
 	{ "firefox",        NULL,                         NULL,        NULL,   1,	      1,         0,           0,            1 },
+	{ "Nightly",        NULL,                         NULL,        NULL,   1,	      1,         0,           0,            1 },
+	{ "Google-chrome",  NULL,                         NULL,        NULL,   1,	      1,         0,           0,            1 },
+	{ "Vivaldi-stable", NULL,                         NULL,        NULL,   1,	      1,         0,           0,            1 },
 	{ "Surf",           NULL,                         NULL,        NULL,   1,	      1,         0,           0,            1 },
-	{ "ncmpcpp",   		NULL,  				  		  NULL,   	   NULL,   1 << 1,    1,         0,			  0,		    1 },
-	{ "st",	            NULL,                         NULL,        NULL,   1 << 1,    1,         0,           0,            1 },
+	{ "ncmpcpp",   		NULL,  				  		  NULL,   	   NULL,   1 << 3,    1,         0,			  0,		    1 },
+	{ "St",	            NULL,                         NULL,        NULL,   1 << 1,    1,         0,           0,            1 },
 	{ "Transmission-gtk",NULL,                        NULL,        NULL,   1 << 2,    1,         0,           0,            1 },
 	{ "SoulseekQt",		NULL,                         NULL,        NULL,   1 << 2,    1,         0,           0,            1 },
 	{ "Thunar",		    NULL,                         NULL,        NULL,   1 << 4,    1,         0,           0,            1 },
@@ -74,6 +78,7 @@ static const Rule rules[] = {
 	{ "Subl3",		    NULL,                         NULL,        NULL,   1 << 6,    1,         0,           0,            1 },
 	{ "Code",		    NULL,                         NULL,        NULL,   1 << 6,    1,         0,           0,            1 },
 	{ "Steam",          NULL,                         NULL,        NULL,   1 << 7,    1,         0,           0,            1 },
+	{ "Slack",          NULL,                         NULL,        NULL,   1 << 7,    1,         0,           0,            1 },
 	{ "Easytag",	    NULL,                         NULL,        NULL,   1 << 8,    1,         1,           0,            1 },
 	{ "Xfce4-taskmanager",NULL,                       NULL,        NULL,   1 << 9,    1,         1,           0,            1 },
 	{ "Gimp",           NULL,                         NULL,        NULL,   1 << 9,    1,         0,           1,            1 },
@@ -125,8 +130,11 @@ static const Layout layouts[] = {
 /* commands */
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
 static const char *dmenucmd[] = { "dmenu_run_history", NULL };
-static const char *scrotcmd[] = {"/usr/bin/scr", NULL};
+static const char *roficmd[] = { "rofi", "-show", "drun", "-show-icons", NULL };
+/*static const char *scrotcmd[] = {"/usr/bin/scr", NULL};*/
+static const char *scrotcmd[] = {"teiler", NULL};
 static const char *termcmd[]  = { "st", NULL };
+/*static const char *browsercmd[] = { "firefox", NULL };*/
 static const char *browsercmd[] = { "firefox", NULL };
 /*static const char *altbrowsercmd[] = { "qutebrowser", NULL };*/
 static const char *exitcmd[] = { "/usr/bin/stop.sh", NULL };
@@ -143,7 +151,8 @@ static const char *scratchpadcmd[] = { "st", "-t", scratchpadname, "-g", "120x34
 static Key keys[] = {
 	/* modifier                     key        function           argument */
 	{ MODKEY,                       XK_d,      spawn,             {.v = dmenucmd } },
-	{ MODKEY,						XK_space,  spawn,             {.v = dmenucmd } },
+	/*{ MODKEY,						XK_space,  spawn,             {.v = dmenucmd } },*/
+	{ MODKEY, 						XK_space,  spawn, 			  {.v = roficmd } },
 	{ MODKEY,                       XK_t, 	   spawn,             {.v = termcmd } },
 	{ MODKEY,                       XK_grave,  togglescratch,  	  {.v = scratchpadcmd } },
 	{ MODKEY|ShiftMask,             XK_b,      togglebar,         {0} },
@@ -193,7 +202,7 @@ static Key keys[] = {
 	{ MODKEY|ControlMask,           XK_e,      setflexlayout,     {.i = 273 } }, // bstackhoriz layout
 	{ MODKEY,                       XK_r,      setflexlayout,     {.i = 272 } }, // bstack layout
 	{ MODKEY|ControlMask,           XK_t,      setflexlayout,     {.i = 261 } }, // default tile layout
-	{ MODKEY,                       XK_g,      setflexlayout,     {.i = 263 } }, // tile + grid layout
+	{ MODKEY|ShiftMask,             XK_g,      setflexlayout,     {.i = 263 } }, // tile + grid layout
 	{ MODKEY|ControlMask,           XK_w,      setflexlayout,     {.i =   7 } }, // grid
 	{ MODKEY|Mod1Mask|ControlMask,  XK_e,      setflexlayout,     {.i = 262 } }, // deck layout
 	{ MODKEY|ControlMask,           XK_r,      setflexlayout,     {.i =   6 } }, // monocle
@@ -201,7 +210,7 @@ static Key keys[] = {
 	{ MODKEY|ControlMask,           XK_space,  setlayout,         {0} },
 	{ MODKEY|ShiftMask,             XK_space,  togglefloating,    {0} },
 	{ MODKEY|ShiftMask,             XK_f,      togglefullscreen,  {0} },
-	{ MODKEY,                       XK_0,      view,              {.ui = ~0 } },
+	{ MODKEY,                       XK_n,      view,              {.ui = ~0 } },
 	{ MODKEY|ShiftMask,             XK_0,      tag,               {.ui = ~0 } },
 	{ MODKEY,                       XK_comma,  focusmon,          {.i = -1 } },
 	{ MODKEY,                       XK_period, focusmon,          {.i = +1 } },
@@ -222,6 +231,7 @@ static Key keys[] = {
 	TAGKEYS(                        XK_7,                         6)
 	TAGKEYS(                        XK_8,                         7)
 	TAGKEYS(                        XK_9,                         8)
+	TAGKEYS(                        XK_0,                         9)
 	TAGKEYS(                        XK_F1,                        0)
 	TAGKEYS(                        XK_F2,                        1)
 	TAGKEYS(                        XK_F3,                        2)
@@ -231,6 +241,7 @@ static Key keys[] = {
 	TAGKEYS(                        XK_F7,                        6)
 	TAGKEYS(                        XK_F8,                        7)
 	TAGKEYS(                        XK_F9,                        8)
+	TAGKEYS(                        XK_F10,                       9)
 	{ MODKEY|ShiftMask,             XK_q,      quit,              {0} },
 	{ MODKEY|ControlMask,           XK_t,      rotatelayoutaxis,  {.i = 0} },    /* flextile, 0 = layout axis */
 	{ MODKEY|ControlMask,           XK_Tab,    rotatelayoutaxis,  {.i = 1} },    /* flextile, 1 = master axis */
@@ -248,13 +259,16 @@ static Key keys[] = {
 	{ 0, XF86XK_AudioRewind,		spawn,						SHCMD("mpc seek -10") },
 	{ 0, XF86XK_AudioForward,		spawn,						SHCMD("mpc seek +10") },
 	{ MODKEY,						XK_w,		spawn,			{.v = browsercmd } },
-	{ MODKEY|ShiftMask,				XK_w,		spawn,			SHCMD("QT_SCALE_FACTOR=0.5 qutebrowser") },
+	/*{ MODKEY|ShiftMask,				XK_w,		spawn,			SHCMD("QT_SCALE_FACTOR=0.5 qutebrowser") },*/
+	{ MODKEY|ShiftMask,				XK_w,		spawn,			SHCMD("qutebrowser") },
+	{ MODKEY|Mod1Mask,				XK_w,		spawn,			SHCMD("google-chrome-stable") },
 	{ MODKEY,						XK_x,		spawn,			{.v = exitcmd } },
 	{ MODKEY,						XK_e,		spawn,			{.v = editcmd } },
 	{ MODKEY|ShiftMask, 			XK_e,		spawn,			{.v = vimcmd } },
-	/*{ MODKEY|ShiftMask,				XK_p,		spawn,			SHCMD("greenclip print | sed '/^$/d' | dmenu -i -l 10 -p clipboard | xargs -r -d'\n' -I '{}' greenclip print '{}'") },*/
-	{ MODKEY|ShiftMask,				XK_p,		spawn,			SHCMD("clipmenu") },
+	{ MODKEY|ShiftMask,				XK_p,		spawn,			SHCMD("rofi -modi \"clipboard:greenclip print\" -show clipboard -run-command '{cmd}'") },
+	/*{ MODKEY|ShiftMask,				XK_p,		spawn,			SHCMD("clipmenu") },*/
 	{ MODKEY,						XK_b,		spawn,		    SHCMD("buku-dmenu") },
+	/*{ MODKEY,						XK_m,		spawn,			SHCMD("st -c ncmpcpp -e ncmpcpp -S media_library") },*/
 	{ MODKEY,						XK_m,		spawn,			SHCMD("st -c ncmpcpp -e ncmpcpp") },
 	{ MODKEY|ShiftMask,				XK_m,		spawn,			SHCMD("QT_SCALE_FACTOR=0.5 audacious") },
 	{ MODKEY,						XK_f,		spawn,			{.v = filecmd } },

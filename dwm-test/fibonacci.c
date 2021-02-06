@@ -2,7 +2,6 @@ void
 fibonacci(Monitor *mon, int s) {
 	unsigned int i, n, nx, ny, nw, nh;
 	Client *c;
-
 	for(n = 0, c = nexttiled(mon->clients); c; c = nexttiled(c->next), n++);
 	if(n == 0)
 		return;
@@ -54,12 +53,10 @@ fibonacci(Monitor *mon, int s) {
 		resize(c, nx, ny, nw - 2 * c->bw, nh - 2 * c->bw, False);
 	}
 }
-
 void
 dwindle(Monitor *mon) {
 	fibonacci(mon, 1);
 }
-
 void
 spiral(Monitor *mon) {
 	fibonacci(mon, 0);

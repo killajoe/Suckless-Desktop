@@ -4,11 +4,11 @@
 static int topbar = 0;                      /* -b  option; if 0, dmenu appears at bottom     */
 static int fuzzy = 1;
 static int centered = 1;                    /* -c option; centers dmenu on screen */
-static int min_width = 800;                    /* minimum width when centered */
+static int min_width = 400;                    /* minimum width when centered */
 static unsigned int border_width = 1; /* size of the window border */
 /* -fn option overrides fonts[0]; default X11 font or font set */
 static const char *fonts[] = {
-	"SF Text Pro:size=5"
+	"SF Text Pro:size=10"
 };
 static const char *prompt      = NULL;      /* -p  option; prompt to the left of input field */
 	static const char *colors[SchemeLast][2] = {
@@ -20,7 +20,7 @@ static const char *prompt      = NULL;      /* -p  option; prompt to the left of
 	[SchemeOut] = { "#ff0000", "#ff0000" },
 };
 /* -l option; if nonzero, dmenu uses vertical list with given number of lines */
-static unsigned int lines      = 5;
+static unsigned int lines      = 10;
 /* -h option; minimum height of a menu line */
 static unsigned int lineheight = 18;
 static unsigned int min_lineheight = 8;

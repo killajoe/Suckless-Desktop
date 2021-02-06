@@ -11,7 +11,7 @@ static char *cachedir       = "~/.surf/cache/";
 static char *cookiefile     = "~/.surf/cookies.txt";
 
 #ifndef HOMEPAGE
-#define HOMEPAGE "https://duckduckgo.com/"
+#define HOMEPAGE "https://google.com/"
 #endif
 
 static char *searchengine = "https://duckduckgo.com/?q=";
@@ -65,7 +65,7 @@ static Parameter defconfig[ParameterLast] = {
 	[StrictTLS]           =       { { .i = 1 },     },
 	[Style]               =       { { .i = 1 },     },
 	[WebGL]               =       { { .i = 0 },     },
-	[ZoomLevel]           =       { { .f = 1.00 },   },
+	[ZoomLevel]           =       { { .f = 1.0 },   },
 };
 
 static UriParameters uriparams[] = {

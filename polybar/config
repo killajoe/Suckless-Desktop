@@ -74,10 +74,11 @@ font-3 = Material Design Icons:pixelsize=15;5
 
 ;modules-left = xdesktops layouts
 modules-left = dwm2 xwindow
-modules-center = mpd
+modules-center = mpd2
 ;modules-center =
-#modules-right = weather cpu memory temperature hour date volume wired-network
-modules-right = weather cpu temperature memory hour date
+;modules-right = weather cpu memory temperature hour date volume wired-network
+;modules-right = diskhome diskroot cpu temperature2 memory eth hour date
+modules-right = diskhome diskroot cpu memory volume2 eth hour date
 
 cursor-click = pointer
 cursor-scroll = ns-resize
@@ -87,6 +88,80 @@ cursor-scroll = ns-resize
 ;; MODULES ;;
 ;;;;;;;;;;;;;
 
+[module/volume2]
+type = internal/alsa
+format-volume = <ramp-volume> <label-volume>
+format-volume-padding = 2
+format-volume-background = #141414
+label-volume = %percentage%%
+label-muted = ""
+label-muted-background = #141414
+label-muted-foreground = #f76767
+label-muted-padding = 2
+format-padding = 2
+ramp-volume-foreground = ${xrdb:color5}
+
+ramp-volume-0 = 
+ramp-volume-1 = 
+ramp-volume-2 = 
+ramp-volume-3 = 
+ramp-volume-4 = 
+ramp-volume-5 = 
+ramp-volume-6 = 
+
+[module/diskroot]
+type = custom/script
+interval = 90
+
+exec = bar-disk 1 "/"
+format-prefix = " "
+format-prefix-foreground = ${xrdb:color2}
+click-left = bar-disk 2
+click-right = bar-disk 3
+format-padding = 2
+label-padding = 2
+
+[module/diskhome]
+type = custom/script
+interval = 90
+
+exec = bar-disk 1 /home
+format-prefix = " "
+format-prefix-foreground = ${xrdb:color1}
+click-left = bar-disk 2
+click-right = bar-disk 3
+format-padding = 2
+label-padding = 2
+
+[module/eth]
+type = internal/network
+interface = eno1
+interval = 3.0
+format-padding = 2
+label--padding = 2
+
+format-connected-underline =
+format-connected-prefix = " "
+format-connected-prefix-foreground = ${xrdb:color6}
+label-connected = %local_ip%
+label-disconnected = 󰈂
+label-disconnected-foreground = ${xrdb:color9}
+format-connected-prefix-padding = 2
+
+
+format-disconnected =
+;format-disconnected = <label-disconnected>
+;format-disconnected-underline = ${self.format-connected-underline}
+;label-disconnected = %ifname% disconnected
+;label-disconnected-foreground = ${colors.foreground-alt}
+
+[module/torrent]
+type = custom/script
+interval = 30
+exec-if = pgrep -x transmission-da
+exec = torrent
+
+click-left = torrent 11
 
 [module/weather]
 type = custom/script
@@ -106,6 +181,9 @@ label-empty = 
 label-maxlen = 100
 format-foreground = ${colors.foreground}
 format-padding = 4
+;format-prefix = 
+;format-prefix-padding = 4
+;format-prefix-foreground = ${xrdb:color3}
 
 ;;;;;;;;;;;;;;;;;;;
 ;; WIRED NETWORK ;;
@@ -128,7 +206,7 @@ format-padding = 2
 type = internal/date
 interval = 1
 format-prefix = "  "
-format-prefix-foreground = #C6C6C6
+format-prefix-foreground = ${xrdb:color1}
 date = %I:%M %p
 format = <label>
 format-background = #141414
@@ -143,8 +221,8 @@ label-padding = 2
 [module/date]
 type = internal/date
 interval = 1
-format-prefix = "  "
-format-prefix-foreground = #C6C6C6
+format-prefix = " "
+format-prefix-foreground = ${xrdb:color2}
 date = %a, %d %b %Y%
 format = <label>
 format-background = #141414
@@ -162,20 +240,21 @@ master-mixer = Master
 label-volume-foreground = ${colors.foreground}
 label-volume = %{A3:pavucontrol & disown:}%percentage%% %{A}
 ;format-volume = <ramp-volume> <label-volume>
-format-volume = <ramp-volume>
-format-volume-padding = 3
+format-volume = <ramp-volume> <label-volume>
+format-volume-padding = 2
+label-volume-padding = 2
+
 label-muted = ""
 label-muted-padding = 3
-label-muted-foreground = #f76767
+label-muted-foreground = ${xrdb:color5}
 ramp-volume-0 = ""
-ramp-volume-0-foreground = #c6c6c6
-ramp-volume-1 = ""
-ramp-volume-1-foreground = #c6c6c6
+ramp-volume-0-foreground = ${xrdb:color5}
+ramp-volume-1 = ""
+ramp-volume-1-foreground = ${xrdb:color5}
 ramp-volume-2 = ""
-ramp-volume-2-foreground = ${colors.orange}
+ramp-volume-2-foreground = ${xrdb:color5}
 ramp-volume-3 = ""
 ramp-volume-3-foreground = ${colors.urgent}
-format-padding = 3
 
 sink = alsa_output.usb-Burr-Brown_Japan_Burr-Brown_Japan_PCM2702-00.iec958-stereo
 
@@ -243,6 +322,7 @@ label-separator-foreground = #737f7f
 type = internal/mpd
 format-online = <label-song>
 format-online-prefix = 
+format-online-prefix-foreground = ${xrdb:color4}
 format-padding = 2
 format-online-padding = 2
 icon-play = 
@@ -254,9 +334,53 @@ icon-random = 
 icon-repeat = 
 label-song-foreground = #C6C6C6
 format-online-foreground = #c6c6c6
+format-prefix =
 label-song =   %artist% - %title% - %album%
 label-offline =  mpd is offline
 format-underline = #c6c6c6
+
+[module/mpd2]
+type = internal/mpd
+;   <label-song> (default)
+;   <label-time>
+;   <bar-progress>
+;   <toggle> - gets replaced with <icon-(pause|play)>
+;   <toggle-stop> - gets replaced with <icon-(stop|play)>
+;   <icon-random>
+;   <icon-repeat>
+;   <icon-repeatone> (deprecated)
+;   <icon-single> - Toggle playing only a single song. Replaces <icon-repeatone>
+;   <icon-consume>
+;   <icon-prev>
+;   <icon-stop>
+;   <icon-play>
+;   <icon-pause>
+;   <icon-next>
+;   <icon-seekb>
+;   <icon-seekf>
+format-online = "<toggle> <label-song> <label-time>"
+format-underline = #FF00DB
+format-prefix-foreground = #c6c6c6
+format-prefix = ""
+
+label-song = %title% - %artist%, %album%
+label-song-foreground = #c6c6c6
+label-song-maxlen = 180
+label-song-ellipsis = true
+;format-online-foreground = ${colors.foreground}
+;format-online-background = ${colors.background}
+label-time-foreground = c6c6c6
+label-time-padding = 2
+icon-prev = 
+icon-stop = 
+icon-play-prefix = ${xrdb:color2}
+icon-play-padding = 2
+icon-pause-padding = 2
+icon-play = 
+icon-pause = 
+icon-next = 
+icon-play-foreground =  ${xrdb:color9}
+icon-pause-foreground =  ${xrdb:color4}
 
 ;;;;;;;;;
 ;; DWM ;;
@@ -569,7 +693,7 @@ format-foreground = #c6c6c6
 
 [module/dwm2]
 type = internal/dwm
-format = <label-tags> <label-layout>
+format = <label-tags> <label-layout> <label-floating>
 ;<label-floating> 
 ;<label-title>
 
@@ -647,7 +771,7 @@ type = internal/cpu
 interval = 2
 format-prefix = " "
 format-padding = 2
-format-prefix-foreground = #c6c6c6
+format-prefix-foreground = ${xrdb:color3}
 format-underline = #f90000
 label = %percentage%%
 label-padding = 2
@@ -657,7 +781,7 @@ type = internal/memory
 interval = 2
 format-prefix = " "
 format-padding = 2
-format-prefix-foreground = #c6c6c6
+format-prefix-foreground = ${xrdb:color4}
 format-underline = #4bffdc
 label = %percentage_used%%
 label-padding = 2
@@ -686,3 +810,14 @@ ramp-2 = 
 ramp-3 = 
 ramp-4 = 
 ramp-foreground = ${colors.foreground-alt}
+
+[module/temperature2]
+type = custom/script
+interval = 1
+format-padding = 2
+exec = temp 1
+format-prefix = " "
+format-prefix-foreground = ${xrdb:color5}
+format-prefix-padding = 2
+click-left = 
+click-right = 
