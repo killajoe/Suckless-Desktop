@@ -41,7 +41,7 @@ static const char *colors[][3]      = {
 };
 
 /* tagging */
-static const char *tags[] = { "", "", "", "", "", "", "", "", "", "" };
+static const char *tags[] = { "", "", "", "", "", "", "", "", "", "" };
 
 static const Rule rules[] = {
     /* xprop(1):
@@ -51,16 +51,18 @@ static const Rule rules[] = {
    /* class      instance    title       tags mask     switchtotag    isfloating   monitor */
    { "qutebrowser",NULL,      NULL,       1,            1,             0,           -1 },
    { "firefox",    NULL,      NULL,       1,            1,             0,           -1 },
+   { "Brave-browser",NULL,    NULL,       1,            1,             0,           -1 },
    { "St",         NULL,      NULL,       1 << 1,       1,             0,           -1 },
    { "ncmpcpp",    NULL,      NULL,       1 << 3,       1,             0,           -1 },
    { "Transmission-gtk", NULL, NULL,      1 << 2,       1,             0,           -1 },
    { "SoulsekkQt", NULL,      NULL,       1 << 2,       1,             0,           -1 },
    { "Thunar",     NULL,      NULL,       1 << 4,       1,             0,           -1 },
    { "File-roller", NULL,     NULL,       1 << 4,       1,             1,           -1 },
+   { "MuPDF",      NULL,      NULL,       1 << 4,       1,             1,           -1 },
    { "Subl3",      NULL,      NULL,       1 << 6,       1,             0,           -1 },
    { "Easytag",    NULL,      NULL,       1 << 8,       1,             0,           -1 },
    { "Xfce4-taskmanager", NULL, NULL,     1 << 9,       1,             0,           -1 },
-   { "Slack",      NULL,      NULL,       1 << 6,       1,             0,           -1 },
+   { "Slack",      NULL,      NULL,       1 << 7,       1,             0,           -1 },
 };
 
 /* layout(s) */
@@ -97,12 +99,15 @@ static const Layout layouts[] = {
 static char dmenumon[2]         = "0"; /* component of dmenucmd, manipulated in spawn() */
 static const char *munext[]  = { "/usr/bin/mpc", "next", NULL };
 static const char *muprev[]  = { "/usr/bin/mpc", "prev", NULL };
-static const char *mupause[]  = { "/usr/bin/mpc", "toggle", NULL };
+static const char *mupause[] = { "/usr/bin/mpc", "toggle", NULL };
 static const char *scrotcmd[] = {"teiler", NULL};
 static const char *browsercmd[] = { "firefox", NULL };
-static const char *termcmd[]    = { "st", NULL };
+static const char *bravecmd[] = { "brave", NULL };
+static const char *altbrowsercmd[] = { "qutebrowser", NULL };
+static const char *termcmd[] = { "st", NULL };
 static const char *dmenucmd[] = { "dmenu_run_history", NULL };
-static const char *roficmd[] = { "rofi", "-show", "drun", "-show-icons", NULL };
+static const char *qdmenucmd[] = { "dmenu_qutebrowser", NULL };
+/*static const char *roficmd[] = { "rofi", "-show", "drun", "-show-icons", NULL };*/
 static const char scratchpadname[] = "scratchpad";
 static const char *scratchpadcmd[] = { "st", "-t", scratchpadname, "-g", "120x34", NULL };
 static const char *exitcmd[] = { "/usr/bin/stop.sh", NULL };
@@ -124,10 +129,12 @@ static Key keys[] = {
   { 0, XF86XK_AudioForward,                               spawn,               SHCMD("mpc seek +10") },
   { MODKEY,                       XK_l,                   spawn,               SHCMD("slock") },
   { MODKEY,                       XK_w,                   spawn,               {.v = browsercmd } },
+  { MODKEY|ShiftMask|ControlMask, XK_w,                   spawn,               {.v = bravecmd } },
+  { MODKEY|ShiftMask,             XK_w,                   spawn,               {.v = altbrowsercmd } },
   { MODKEY,                       XK_f,                   spawn,               {.v = filecmd } },
   { 0,                            XK_Print,               spawn,               {.v = scrotcmd } },
-  { MODKEY,                       XK_space,               spawn,               {.v = roficmd } },
-  { MODKEY,                       XK_d,                   spawn,               {.v = dmenucmd } },
+  { MODKEY,                       XK_space,               spawn,               {.v = dmenucmd } },
+  { MODKEY,                       XK_d,                   spawn,               {.v = qdmenucmd } },
   { MODKEY,                       XK_t,                   spawn,               {.v = termcmd } },
   { MODKEY,                       XK_grave,               togglescratch,       {.v = scratchpadcmd } },
   { MODKEY,                       XK_x,                   spawn,               {.v = exitcmd } },
